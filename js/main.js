@@ -1,8 +1,27 @@
 // ==========================================
-// CONFIG DIRECTORY LOADER
+// TRIPLE-TIER FALLBACK LOADER
 // ==========================================
 const GITHUB_API_URL = 'https://api.github.com/repos/hkhrithik007/smart-brew-assistant/contents/barista';
 const LOCAL_INDEX_URL = '../barista/index.json';
+
+// TIER 3 EMERGENCY FALLBACK: If GitHub blocks the API limit AND you have no local index.json
+const EMERGENCY_FALLBACK_DATA = [
+  {
+    id: "james_hoffmann", name: "James Hoffmann", default_roast: "medium_light", default_process: "washed", default_dose: 15,
+    methods: {
+      v60: {
+        label: "Pour Over (V60)", ratio: 16.6, result_type: "Clean, sweet, and bright cup.", steps: [
+          { time: "0:00", water: "{{chunk_1}}", text: "Pour for the bloom. Give the brewer a gentle swirl. Wait 45 seconds." },
+          { time: "0:45", water: "{{chunk_2}}", text: "Pour over 10 seconds. Pour in slow circles. Wait until 1:10." },
+          { time: "1:10", water: "{{chunk_3}}", text: "Pour over 10 seconds. Wait 10 seconds." },
+          { time: "1:30", water: "{{chunk_4}}", text: "Pour over 10 seconds. Wait 10 seconds." },
+          { time: "1:50", water: "{{water}}", text: "Pour over 10 seconds." },
+          { time: "2:00", water: "", text: "Give the brewer a final gentle swirl. Let it draw down." }
+        ]
+      }
+    }
+  }
+];
 
 let allBaristas = [];
 let stagedCustomMethods = {};
@@ -42,6 +61,11 @@ const loadConfigFile = document.getElementById('load-config-file');
 const stagedMethodsContainer = document.getElementById('staged-methods-container');
 const stagedMethodsList = document.getElementById('staged-methods-list');
 
+// Dark Mode Toggle
+const themeToggleBtn = document.getElementById('theme-toggle');
+const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+
 // ==========================================
 // Dynamic Temperature Logic
 // ==========================================
@@ -58,38 +82,57 @@ function getOptimalTemp(roast, process) {
   return Math.max(80, Math.min(100, temp));
 }
 
-// Methods that do not need a specific kettle temperature displayed
 const noTempMethods = ['moka_pot', 'cold_brew', 'siphon', 'phin'];
 
 // ==========================================
 // Initialization & Loading
 // ==========================================
 async function initializeApp() {
+  setupDarkMode();
+
   try {
     let yamlFilesToFetch = [];
+    let loadSuccess = false;
 
+    // TIER 1: Try GitHub API (Live)
     try {
       const response = await fetch(GITHUB_API_URL);
       if (response.ok) {
         const files = await response.json();
         yamlFilesToFetch = files.filter(f => f.name.endsWith('.yaml') || f.name.endsWith('.yml')).map(f => f.download_url);
-      } else { throw new Error('API Rate limit'); }
-    } catch (e) {
-      const indexResponse = await fetch(LOCAL_INDEX_URL);
-      if (indexResponse.ok) {
-        const localFiles = await indexResponse.json();
-        yamlFilesToFetch = localFiles.map(fileName => `../barista/${fileName}`);
+        loadSuccess = true;
+      }
+    } catch (e) { console.log("GitHub API blocked/failed. Falling back to local..."); }
+
+    // TIER 2: Try Local index.json (Development)
+    if (!loadSuccess) {
+      try {
+        const indexResponse = await fetch(LOCAL_INDEX_URL);
+        if (indexResponse.ok) {
+          const localFiles = await indexResponse.json();
+          yamlFilesToFetch = localFiles.map(fileName => `../barista/${fileName}`);
+          loadSuccess = true;
+        }
+      } catch (e) { console.log("Local fetch failed (CORS or missing file). Triggering emergency fallback..."); }
+    }
+
+    // Process TIER 1 or 2 downloads
+    if (loadSuccess && yamlFilesToFetch.length > 0) {
+      for (const url of yamlFilesToFetch) {
+        try {
+          const cacheBusterUrl = url.includes('github') ? url : url + '?t=' + new Date().getTime();
+          const fileRes = await fetch(cacheBusterUrl);
+          if (!fileRes.ok) continue;
+          const config = jsyaml.load(await fileRes.text());
+          if (config && config.id) allBaristas.push(config);
+        } catch (err) { console.warn(`Skipped YAML`, err); }
       }
     }
 
-    for (const url of yamlFilesToFetch) {
-      try {
-        const cacheBusterUrl = url + '?t=' + new Date().getTime();
-        const fileRes = await fetch(cacheBusterUrl);
-        if (!fileRes.ok) continue;
-        const config = jsyaml.load(await fileRes.text());
-        if (config && config.id) allBaristas.push(config);
-      } catch (err) { console.warn(`Skipped YAML`, err); }
+    // TIER 3: Emergency Fallback
+    if (allBaristas.length === 0) {
+      console.warn("Using Emergency Hardcoded Fallback.");
+      allBaristas = [...EMERGENCY_FALLBACK_DATA];
     }
 
     renderBaristaDropdown();
@@ -101,8 +144,34 @@ async function initializeApp() {
   } catch (error) {
     console.error(error);
     creatorBadgeEl.textContent = "Setup Required";
-    baristaEl.innerHTML = '<option disabled selected>No .yaml config files found</option>';
+    baristaEl.innerHTML = '<option disabled selected>No configurations found</option>';
   }
+}
+
+// ==========================================
+// Dark Mode Logic
+// ==========================================
+function setupDarkMode() {
+  if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    document.documentElement.classList.add('dark');
+    themeToggleLightIcon.classList.remove('hidden');
+  } else {
+    document.documentElement.classList.remove('dark');
+    themeToggleDarkIcon.classList.remove('hidden');
+  }
+
+  themeToggleBtn.addEventListener('click', function () {
+    themeToggleDarkIcon.classList.toggle('hidden');
+    themeToggleLightIcon.classList.toggle('hidden');
+
+    if (document.documentElement.classList.contains('dark')) {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('color-theme', 'light');
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('color-theme', 'dark');
+    }
+  });
 }
 
 function renderBaristaDropdown(selectedId = null) {
@@ -111,7 +180,8 @@ function renderBaristaDropdown(selectedId = null) {
 
   baristaEl.innerHTML = dropdownHTML;
   baristaEl.disabled = false;
-  baristaEl.classList.replace("bg-slate-100", "bg-white");
+  baristaEl.classList.remove("bg-stone-100", "dark:bg-stone-800");
+  baristaEl.classList.add("bg-white", "dark:bg-stone-900");
 
   if (selectedId) baristaEl.value = selectedId;
   updateMethodsDropdown();
@@ -212,7 +282,7 @@ function renderStagedMethods() {
   if (keys.length > 0) {
     stagedMethodsContainer.classList.remove('hidden');
     stagedMethodsList.innerHTML = keys.map(k => `
-      <span class="inline-flex items-center gap-1 px-2 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-md border border-indigo-200">
+      <span class="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 text-xs font-bold rounded-md border border-amber-200 dark:border-amber-700/50">
         ${stagedCustomMethods[k].label}
         <button onclick="removeStagedMethod('${k}')" class="hover:text-red-500 ml-1 leading-none text-sm">&times;</button>
       </span>
@@ -232,22 +302,22 @@ window.removeStagedMethod = function (id) {
 // ==========================================
 function addCustomStepRow() {
   const div = document.createElement('div');
-  div.className = 'flex flex-col gap-2 step-row bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm';
+  div.className = 'flex flex-col gap-2 step-row bg-white dark:bg-stone-800 p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm';
 
   div.innerHTML = `
     <div class="flex gap-2 items-center w-full">
-      <div class="flex items-center justify-center bg-slate-100 rounded-md py-1 px-1 w-[4.5rem] shrink-0 shadow-inner">
-        <input type="number" inputmode="numeric" class="custom-step-min w-6 bg-transparent text-slate-700 text-center text-sm font-bold focus:outline-none" placeholder="0" min="0" max="15" value="0" />
-        <span class="text-slate-400 font-black text-xs">:</span>
-        <input type="number" inputmode="numeric" class="custom-step-sec w-6 bg-transparent text-slate-700 text-center text-sm font-bold focus:outline-none" placeholder="00" min="0" max="59" value="00" />
+      <div class="flex items-center justify-center bg-stone-100 dark:bg-stone-900 rounded-md py-1 px-1 w-[4.5rem] shrink-0 shadow-inner">
+        <input type="number" inputmode="numeric" class="custom-step-min w-6 bg-transparent text-stone-700 dark:text-stone-300 text-center text-sm font-bold focus:outline-none" placeholder="0" min="0" max="15" value="0" />
+        <span class="text-stone-400 font-black text-xs">:</span>
+        <input type="number" inputmode="numeric" class="custom-step-sec w-6 bg-transparent text-stone-700 dark:text-stone-300 text-center text-sm font-bold focus:outline-none" placeholder="00" min="0" max="59" value="00" />
       </div>
-      <div class="flex items-center bg-indigo-50 border border-indigo-100 rounded-md shrink-0 px-2 h-full">
-        <input type="text" class="custom-step-water w-12 bg-transparent text-indigo-700 py-1 focus:outline-none text-xs font-bold text-center" placeholder="{{water}}" />
-        <span class="text-indigo-400 text-[10px] font-bold">g</span>
+      <div class="flex items-center bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 rounded-md shrink-0 px-2 h-full">
+        <input type="text" class="custom-step-water w-12 bg-transparent text-amber-700 dark:text-amber-400 py-1 focus:outline-none text-xs font-bold text-center" placeholder="{{water}}" />
+        <span class="text-amber-500 text-[10px] font-bold">g</span>
       </div>
-      <button class="remove-step text-slate-300 hover:text-red-500 font-bold ml-auto px-2 text-xl leading-none">&times;</button>
+      <button class="remove-step text-stone-300 dark:text-stone-600 hover:text-red-500 font-bold ml-auto px-2 text-xl leading-none">&times;</button>
     </div>
-    <input type="text" class="custom-step-text w-full bg-slate-50 border border-slate-200 text-slate-700 py-1.5 px-3 rounded-md focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="Instruction text..." />
+    <input type="text" class="custom-step-text w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 py-1.5 px-3 rounded-md focus:ring-2 focus:ring-amber-600 text-sm" placeholder="Instruction text..." />
   `;
 
   const secInput = div.querySelector('.custom-step-sec');
@@ -323,15 +393,15 @@ function handleFileUpload(e) {
 // Core Calculation & Rendering
 // ==========================================
 function buildTimelineStep(time, water, instruction) {
-  const waterBadge = water ? `<span class="ml-2 text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full">${water}g</span>` : '';
+  const waterBadge = water ? `<span class="ml-2 text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/50 border border-amber-200 dark:border-amber-700/50 px-2 py-0.5 rounded-full">${water}g</span>` : '';
   return `
     <div class="relative pl-7">
-        <div class="absolute w-3.5 h-3.5 bg-indigo-500 rounded-full -left-[8px] top-1.5 ring-4 ring-white shadow-sm"></div>
+        <div class="absolute w-3.5 h-3.5 bg-amber-600 rounded-full -left-[8px] top-1.5 ring-4 ring-white dark:ring-stone-900 shadow-sm transition-colors duration-300"></div>
         <div class="flex items-center mb-1">
-          <div class="text-sm font-black text-indigo-600 tracking-wide">${time}</div>
+          <div class="text-sm font-black text-amber-700 dark:text-amber-500 tracking-wide">${time}</div>
           ${waterBadge}
         </div>
-        <div class="text-slate-600 leading-relaxed text-sm md:text-base">${instruction}</div>
+        <div class="text-stone-600 dark:text-stone-300 leading-relaxed text-sm md:text-base">${instruction}</div>
     </div>
   `;
 }
@@ -350,7 +420,6 @@ function calculateRecipe() {
   const weight = parseFloat(weightEl.value) || 0;
   const isCustom = baristaEl.value === 'custom';
 
-  // 1. Determine Ratio & ID
   let activeRatio = 17;
   let activeMethodId = '';
 
@@ -367,7 +436,6 @@ function calculateRecipe() {
     activeMethodId = customBrewMethodEl.value;
   }
 
-  // 2. Hide/Show Temp Card based on Brew Method
   if (noTempMethods.includes(activeMethodId)) {
     tempCardEl.classList.add('hidden');
     metricsContainer.classList.replace('grid-cols-2', 'grid-cols-1');
@@ -376,16 +444,14 @@ function calculateRecipe() {
     metricsContainer.classList.replace('grid-cols-1', 'grid-cols-2');
   }
 
-  // 3. Process Water & Math
   ratioDisplay.textContent = activeRatio;
   const totalWater = Math.round(weight * activeRatio);
   targetWaterEl.textContent = totalWater;
   targetTempEl.textContent = getOptimalTemp(roastEl.value, fermentationEl.value);
 
-  // 4. Render Layout
   if (isCustom) {
     creatorBadgeEl.textContent = `Custom Workspace`;
-    creatorBadgeEl.className = "inline-block py-1 px-3 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold tracking-wider mb-3 uppercase";
+    creatorBadgeEl.className = "inline-block py-1 px-3 rounded-full bg-teal-100 dark:bg-teal-900/40 text-teal-800 dark:text-teal-300 text-xs font-bold tracking-wider mb-3 uppercase border border-teal-200 dark:border-teal-800";
     recipeTitleEl.textContent = customNameEl.value || 'Untitled Brew Method';
     recipeProfileEl.textContent = customProfileEl.value ? `Target: ${customProfileEl.value}` : '';
 
@@ -409,7 +475,7 @@ function calculateRecipe() {
 
     if (activeBarista && activeMethodData) {
       creatorBadgeEl.textContent = `${activeBarista.name} Config`;
-      creatorBadgeEl.className = "inline-block py-1 px-3 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold tracking-wider mb-3 uppercase";
+      creatorBadgeEl.className = "inline-block py-1 px-3 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 text-xs font-bold tracking-wider mb-3 uppercase border border-amber-200 dark:border-amber-800";
       recipeTitleEl.textContent = `${activeMethodData.label} Technique`;
       recipeProfileEl.textContent = activeMethodData.result_type ? `Target: ${activeMethodData.result_type}` : '';
 

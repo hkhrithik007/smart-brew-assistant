@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>James Hoffmann Brew Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* Custom styles for a premium range slider */
+      input[type="range"] {
+        -webkit-appearance: none;
+        background: transparent;
+      }
+
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 20px;
+        width: 20px;
+        border-radius: 50%;
+        background: #4f46e5;
+        cursor: pointer;
+        margin-top: -8px;
+        box-shadow: 0 2px 6px rgba(79, 70, 229, 0.4);
+      }
+
+      input[type="range"]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 6px;
+        cursor: pointer;
+        background: #e2e8f0;
+        border-radius: 9999px;
+      }
+
+      input[type="range"]:focus {
+        outline: none;
+      }
+
+      input[type="range"]:focus::-webkit-slider-thumb {
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.2);
+      }
+    </style>
+  </head>
+
+  <body
+    class="bg-gradient-to-br from-slate-100 to-slate-200 min-h-screen font-sans text-slate-800 antialiased p-4 md:p-8 flex items-center justify-center"
+  >
+    <!-- Main Container -->
+    <div
+      class="w-full max-w-5xl bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl shadow-slate-200/50 overflow-hidden flex flex-col md:flex-row border border-white"
+    >
+      <!-- Left Panel: Inputs -->
+      <div
+        class="w-full md:w-5/12 bg-slate-50/50 p-8 lg:p-10 border-r border-slate-100"
+      >
+        <div class="mb-8">
+          <span
+            class="inline-block py-1 px-3 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold tracking-wider mb-3 uppercase"
+            >James Hoffmann Methods</span
+          >
+          <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">
+            Brew Setup
+          </h2>
+          <p class="text-sm text-slate-500 mt-1">Dial in your parameters.</p>
+        </div>
+
+        <div class="space-y-5">
+          <div>
+            <label
+              class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2"
+              for="method"
+              >Brew Method</label
+            >
+            <select
+              id="method"
+              class="w-full bg-white border border-slate-200 text-slate-700 py-3 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm appearance-none"
+            >
+              <option value="v60">Pour Over (V60)</option>
+              <option value="french_press">French Press</option>
+              <option value="aeropress">AeroPress</option>
+            </select>
+          </div>
+
+          <div>
+            <label
+              class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2"
+              for="roast"
+              >Roast Level</label
+            >
+            <select
+              id="roast"
+              class="w-full bg-white border border-slate-200 text-slate-700 py-3 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm appearance-none"
+            >
+              <option value="very_light">Very Light</option>
+              <option value="light">Light</option>
+              <option value="medium_light" selected>Medium Light</option>
+              <option value="medium_dark">Medium Dark</option>
+              <option value="dark">Dark</option>
+              <option value="very_dark">Very Dark</option>
+            </select>
+          </div>
+
+          <div>
+            <label
+              class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2"
+              for="fermentation"
+              >Processing</label
+            >
+            <select
+              id="fermentation"
+              class="w-full bg-white border border-slate-200 text-slate-700 py-3 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm appearance-none"
+            >
+              <option value="washed">Washed</option>
+              <option value="washed_ferment">Washed + Ferment</option>
+              <option value="yellow_honey">Yellow Honey</option>
+              <option value="red_honey">Red Honey</option>
+              <option value="natural" selected>Natural</option>
+              <option value="natural_ferment">Natural + Ferment</option>
+            </select>
+          </div>
+
+          <div>
+            <label
+              class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2"
+              for="weight"
+              >Coffee Dose (g)</label
+            >
+            <input
+              type="number"
+              id="weight"
+              value="15"
+              min="10"
+              max="50"
+              class="w-full bg-white border border-slate-200 text-slate-700 py-3 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm"
+            />
+          </div>
+
+          <div class="pt-2">
+            <div class="flex justify-between items-center mb-2">
+              <label
+                class="block text-xs font-bold text-slate-500 uppercase tracking-wider"
+                for="ratio"
+                >Water Ratio</label
+              >
+              <span
+                class="text-sm font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md"
+                >1:<span id="ratio-display">17</span></span
+              >
+            </div>
+            <input
+              type="range"
+              id="ratio"
+              min="10"
+              max="20"
+              value="17"
+              class="w-full mt-2"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel: Outputs -->
+      <div class="w-full md:w-7/12 p-8 lg:p-12">
+        <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight mb-6">
+          Extraction Profile
+        </h2>
+
+        <!-- Result Cards -->
+        <div class="grid grid-cols-2 gap-4 mb-10">
+          <div
+            class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100/50 p-5 rounded-2xl shadow-sm relative overflow-hidden"
+          >
+            <div class="absolute top-0 right-0 p-4 opacity-10">
+              <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z" />
+              </svg>
+            </div>
+            <p
+              class="text-xs font-bold text-blue-600 uppercase tracking-wider mb-1"
+            >
+              Target Yield
+            </p>
+            <p class="text-4xl font-black text-blue-900">
+              <span id="target-water">255</span
+              ><span class="text-2xl font-semibold text-blue-700 ml-1">g</span>
+            </p>
+          </div>
+
+          <div
+            class="bg-gradient-to-br from-rose-50 to-orange-50 border border-rose-100/50 p-5 rounded-2xl shadow-sm relative overflow-hidden"
+          >
+            <div class="absolute top-0 right-0 p-4 opacity-10">
+              <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
+                <path
+                  d="M17.66 11.2C17.43 10.9 17.15 10.64 16.89 10.38C16.22 9.78 15.46 9.35 14.82 8.72C13.33 7.26 13 4.85 13.95 3.25C14.06 3.06 14.12 2.85 14.15 2.63C14.17 2.4 14.13 2.17 14.04 1.96C13.95 1.75 13.8 1.58 13.61 1.45C13.43 1.32 13.2 1.25 12.97 1.25H12.78C12.43 1.3 12.11 1.48 11.88 1.76C9.69 4.3 8.24 8.04 9.17 11.96C8.83 11.83 8.47 11.75 8.09 11.75C7.26 11.75 6.47 12.08 5.89 12.67C5.3 13.25 4.97 14.04 4.97 14.87C4.97 15.7 5.3 16.49 5.89 17.07C6.47 17.66 7.26 17.99 8.09 17.99C8.34 17.99 8.58 17.96 8.81 17.91C9.63 20.31 11.83 22.06 14.41 22.06C17.5 22.06 20 19.56 20 16.47C20 14.47 19.11 12.65 17.66 11.2Z"
+                />
+              </svg>
+            </div>
+            <p
+              class="text-xs font-bold text-rose-600 uppercase tracking-wider mb-1"
+            >
+              Brew Temp
+            </p>
+            <p class="text-4xl font-black text-rose-900">
+              <span id="target-temp">90</span
+              ><span class="text-2xl font-semibold text-rose-700">°C</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Recipe Timeline -->
+        <div>
+          <h3 class="text-lg font-bold text-slate-900 mb-2">
+            James Hoffmann Technique
+          </h3>
+          <div
+            id="recipe-steps"
+            class="relative border-l-2 border-indigo-100 ml-3 mt-6 space-y-7 pb-4"
+          >
+            <!-- Steps injected via JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Application Logic -->
+    <script src="js/main.js"></script>
+  </body>
+</html>

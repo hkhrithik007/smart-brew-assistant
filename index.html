@@ -301,6 +301,9 @@
                   <option value="chemex">Chemex</option>
                   <option value="clever">Clever Dripper</option>
                   <option value="cold_brew">Cold Brew</option>
+                  <option value="moka_pot">Moka Pot</option>
+                  <option value="siphon">Siphon</option>
+                  <option value="phin">Phin</option>
                 </select>
               </div>
             </div>
@@ -343,7 +346,7 @@
               </div>
             </div>
 
-            <!-- NEW: Staged Methods Display -->
+            <!-- Staged Methods Display -->
             <div
               id="staged-methods-container"
               class="hidden mt-4 p-3 bg-slate-50 border border-slate-200 rounded-lg"
@@ -367,7 +370,11 @@
           Extraction Profile
         </h2>
 
-        <div class="grid grid-cols-2 gap-4 mb-8">
+        <!-- ADDED ID TO THIS CONTAINER FOR JS SIZING -->
+        <div
+          id="metrics-container"
+          class="grid grid-cols-2 gap-4 mb-8 transition-all"
+        >
           <div
             class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100/50 p-5 rounded-2xl shadow-sm relative overflow-hidden"
           >
@@ -381,8 +388,10 @@
               ><span class="text-2xl font-semibold text-blue-700 ml-1">g</span>
             </p>
           </div>
+          <!-- ADDED ID TO TEMP CARD -->
           <div
-            class="bg-gradient-to-br from-rose-50 to-orange-50 border border-rose-100/50 p-5 rounded-2xl shadow-sm relative overflow-hidden"
+            id="temp-card"
+            class="bg-gradient-to-br from-rose-50 to-orange-50 border border-rose-100/50 p-5 rounded-2xl shadow-sm relative overflow-hidden transition-all"
           >
             <p
               class="text-xs font-bold text-rose-600 uppercase tracking-wider mb-1"

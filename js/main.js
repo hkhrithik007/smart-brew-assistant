@@ -5,7 +5,7 @@ const GITHUB_API_URL = 'https://api.github.com/repos/hkhrithik007/smart-brew-ass
 const LOCAL_INDEX_URL = '../barista/index.json';
 
 let allBaristas = [];
-let stagedCustomMethods = {}; // Stores multiple methods for the Custom Config Builder
+let stagedCustomMethods = {};
 
 // ==========================================
 // DOM Elements
@@ -25,6 +25,9 @@ const recipeStepsEl = document.getElementById('recipe-steps');
 const creatorBadgeEl = document.getElementById('creator-badge');
 const recipeTitleEl = document.getElementById('recipe-title');
 const recipeProfileEl = document.getElementById('recipe-profile');
+
+const metricsContainer = document.getElementById('metrics-container');
+const tempCardEl = document.getElementById('temp-card');
 
 // Custom Builder Elements
 const customBuilder = document.getElementById('custom-builder');
@@ -55,6 +58,9 @@ function getOptimalTemp(roast, process) {
   return Math.max(80, Math.min(100, temp));
 }
 
+// Methods that do not need a specific kettle temperature displayed
+const noTempMethods = ['moka_pot', 'cold_brew', 'siphon', 'phin'];
+
 // ==========================================
 // Initialization & Loading
 // ==========================================
@@ -62,7 +68,6 @@ async function initializeApp() {
   try {
     let yamlFilesToFetch = [];
 
-    // NOTE: Comment out the GitHub fetch block below if you need to test purely locally
     try {
       const response = await fetch(GITHUB_API_URL);
       if (response.ok) {
@@ -188,7 +193,6 @@ function stageCurrentMethod() {
     };
   });
 
-  // Save the current setup to our global staging object
   stagedCustomMethods[methodId] = {
     label: methodLabel,
     ratio: parseFloat(ratioEl.value),
@@ -197,8 +201,6 @@ function stageCurrentMethod() {
   };
 
   renderStagedMethods();
-
-  // Reset the UI so they can easily enter the next method
   customProfileEl.value = '';
   customStepsContainer.innerHTML = '';
   addCustomStepRow();
@@ -220,7 +222,6 @@ function renderStagedMethods() {
   }
 }
 
-// Accessible from inline HTML onclick
 window.removeStagedMethod = function (id) {
   delete stagedCustomMethods[id];
   renderStagedMethods();
@@ -268,8 +269,6 @@ function addCustomStepRow() {
 // ==========================================
 function downloadCustomConfig() {
   const configName = customNameEl.value || 'My Custom Config';
-
-  // Auto-save whatever is currently on the screen if they haven't explicitly clicked "Save Method" yet
   const hasUnsavedSteps = document.querySelectorAll('.step-row').length > 0 && document.querySelector('.custom-step-text').value !== '';
   if (Object.keys(stagedCustomMethods).length === 0 || hasUnsavedSteps) {
     stageCurrentMethod();
@@ -351,23 +350,39 @@ function calculateRecipe() {
   const weight = parseFloat(weightEl.value) || 0;
   const isCustom = baristaEl.value === 'custom';
 
+  // 1. Determine Ratio & ID
   let activeRatio = 17;
+  let activeMethodId = '';
+
   if (!isCustom) {
     const activeBarista = allBaristas.find(b => b.id === baristaEl.value);
-    const activeMethodData = activeBarista?.methods[methodEl.value];
+    activeMethodId = methodEl.value;
+    const activeMethodData = activeBarista?.methods[activeMethodId];
     if (activeMethodData) {
       activeRatio = activeMethodData.ratio || 16.6;
       ratioEl.value = activeRatio;
     }
   } else {
     activeRatio = parseFloat(ratioEl.value) || 17;
+    activeMethodId = customBrewMethodEl.value;
   }
 
+  // 2. Hide/Show Temp Card based on Brew Method
+  if (noTempMethods.includes(activeMethodId)) {
+    tempCardEl.classList.add('hidden');
+    metricsContainer.classList.replace('grid-cols-2', 'grid-cols-1');
+  } else {
+    tempCardEl.classList.remove('hidden');
+    metricsContainer.classList.replace('grid-cols-1', 'grid-cols-2');
+  }
+
+  // 3. Process Water & Math
   ratioDisplay.textContent = activeRatio;
   const totalWater = Math.round(weight * activeRatio);
   targetWaterEl.textContent = totalWater;
   targetTempEl.textContent = getOptimalTemp(roastEl.value, fermentationEl.value);
 
+  // 4. Render Layout
   if (isCustom) {
     creatorBadgeEl.textContent = `Custom Workspace`;
     creatorBadgeEl.className = "inline-block py-1 px-3 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold tracking-wider mb-3 uppercase";

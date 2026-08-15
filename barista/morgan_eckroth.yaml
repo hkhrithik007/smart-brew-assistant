@@ -1,0 +1,74 @@
+id: "morgan_eckroth"
+name: "Morgan Eckroth"
+default_roast: "light"
+default_process: "washed"
+default_dose: 15
+methods:
+  v60:
+    label: "Pour Over (V60)"
+    ratio: 16.0
+    result_type: "Balanced, everyday cup with great clarity."
+    steps:
+      - time: "0:00"
+        water: "{{chunk_1}}"
+        text: 'Pour water in a spiral motion for the bloom. Let it rest and let the CO2 escape.'
+      - time: "0:30"
+        water: "{{chunk_3}}"
+        text: 'Pour the next batch of water in a spiral motion, starting in the center and working towards the edges.'
+      - time: "1:30"
+        water: "{{water}}"
+        text: 'Pour the remaining water. The drawdown should finish right around 2:15 to 2:30.'
+      - time: "2:30"
+        water: ""
+        text: 'Drawdown completes. Serve and enjoy!'
+  french_press:
+    label: "French Press"
+    ratio: 15.0
+    result_type: "Full-bodied, rich, and sweet cup."
+    steps:
+      - time: "0:00"
+        water: ""
+        text: 'Add roughly 2x the coffee weight in water for the bloom. Use a spoon to stir lightly, ensuring all grounds are saturated.'
+      - time: "0:30"
+        water: "{{water}}"
+        text: 'Add the remaining water. Give it one final stir and place the plunger resting lightly on the surface (do not push down).'
+      - time: "4:30"
+        water: ""
+        text: 'Remove from scale. Plunge slowly until the coffee bed is almost compacted at the bottom. Do not press hard into the grounds.'
+  aeropress:
+    label: "AeroPress"
+    ratio: 16.0
+    result_type: "Easy, versatile, and well-extracted cup."
+    steps:
+      - time: "0:00"
+        water: "{{water}}"
+        text: 'Standard orientation. Add all of your water right off the bat. Give it a stir to incorporate the grounds.'
+      - time: "0:15"
+        water: ""
+        text: 'Place the plunger on top at a slight angle to create a vacuum seal. This stops coffee from dripping through early.'
+      - time: "1:30"
+        water: ""
+        text: 'Straighten out the plunger and begin pushing down slowly and steadily (this should take 15-30 seconds).'
+      - time: "2:00"
+        water: ""
+        text: 'Stop plunging when you feel the bed compact or hear a slight hiss.'
+  moka_pot:
+    label: "Moka Pot"
+    ratio: 10.0
+    result_type: "Rich, highly concentrated, espresso-like coffee."
+    steps:
+      - time: "0:00"
+        water: ""
+        text: 'Fill the lower chamber with preheated water up to just below the pressure release valve.'
+      - time: "0:15"
+        water: ""
+        text: 'Fill the basket to the top with coffee (do not tamp or compress). Assemble the pot using a towel to protect your hands.'
+      - time: "0:30"
+        water: ""
+        text: 'Place on the stove over medium heat. Leave the lid open so you can keep an eye on the brew.'
+      - time: "2:00"
+        water: ""
+        text: 'As soon as coffee starts to bubble up into the top chamber, reduce the stove to low heat.'
+      - time: "3:00"
+        water: ""
+        text: 'When you hear the coffee sputtering, close the lid and remove the pot entirely from the heat. Pour immediately.'

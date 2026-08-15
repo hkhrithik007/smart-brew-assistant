@@ -251,6 +251,7 @@
                 </svg>
                 Custom Editor
               </h3>
+              <!-- DOWNLOAD ALL BUNDLED METHODS -->
               <button
                 id="download-config-btn"
                 class="text-xs font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 py-1.5 px-3 rounded-md transition-colors flex items-center gap-1"
@@ -268,7 +269,7 @@
                     d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
                   ></path>
                 </svg>
-                Save
+                Export Config
               </button>
             </div>
 
@@ -325,12 +326,36 @@
               <div id="custom-steps-container" class="space-y-3 mb-3">
                 <!-- JS injects rows here -->
               </div>
-              <button
-                id="add-step-btn"
-                class="w-full py-2 bg-indigo-50 text-indigo-600 text-sm font-bold rounded-lg border border-indigo-100 hover:bg-indigo-100 transition-colors"
+
+              <div class="flex gap-2">
+                <button
+                  id="add-step-btn"
+                  class="w-1/2 py-2 bg-indigo-50 text-indigo-600 text-sm font-bold rounded-lg border border-indigo-100 hover:bg-indigo-100 transition-colors"
+                >
+                  + Add Step
+                </button>
+                <button
+                  id="stage-method-btn"
+                  class="w-1/2 py-2 bg-emerald-50 text-emerald-600 text-sm font-bold rounded-lg border border-emerald-100 hover:bg-emerald-100 transition-colors"
+                >
+                  ✓ Save Method to Config
+                </button>
+              </div>
+            </div>
+
+            <!-- NEW: Staged Methods Display -->
+            <div
+              id="staged-methods-container"
+              class="hidden mt-4 p-3 bg-slate-50 border border-slate-200 rounded-lg"
+            >
+              <p
+                class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2"
               >
-                + Add Step
-              </button>
+                Methods Bundled in Config:
+              </p>
+              <div id="staged-methods-list" class="flex flex-wrap gap-2">
+                <!-- JS injects badges here -->
+              </div>
             </div>
           </div>
         </div>

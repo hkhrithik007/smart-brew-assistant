@@ -5,6 +5,7 @@ const GITHUB_API_URL = 'https://api.github.com/repos/hkhrithik007/smart-brew-ass
 const LOCAL_INDEX_URL = '../barista/index.json';
 
 let allBaristas = [];
+let stagedCustomMethods = {}; // Stores multiple methods for the Custom Config Builder
 
 // ==========================================
 // DOM Elements
@@ -32,8 +33,11 @@ const customBrewMethodEl = document.getElementById('custom-brew-method');
 const customProfileEl = document.getElementById('custom-profile');
 const customStepsContainer = document.getElementById('custom-steps-container');
 const addStepBtn = document.getElementById('add-step-btn');
+const stageMethodBtn = document.getElementById('stage-method-btn');
 const downloadConfigBtn = document.getElementById('download-config-btn');
 const loadConfigFile = document.getElementById('load-config-file');
+const stagedMethodsContainer = document.getElementById('staged-methods-container');
+const stagedMethodsList = document.getElementById('staged-methods-list');
 
 // ==========================================
 // Dynamic Temperature Logic
@@ -58,6 +62,7 @@ async function initializeApp() {
   try {
     let yamlFilesToFetch = [];
 
+    // NOTE: Comment out the GitHub fetch block below if you need to test purely locally
     try {
       const response = await fetch(GITHUB_API_URL);
       if (response.ok) {
@@ -126,8 +131,9 @@ function setupEventListeners() {
   customNameEl.addEventListener('input', calculateRecipe);
   customBrewMethodEl.addEventListener('change', calculateRecipe);
   customProfileEl.addEventListener('input', calculateRecipe);
-  addStepBtn.addEventListener('click', () => { addCustomStepRow(); calculateRecipe(); });
 
+  addStepBtn.addEventListener('click', () => { addCustomStepRow(); calculateRecipe(); });
+  stageMethodBtn.addEventListener('click', stageCurrentMethod);
   downloadConfigBtn.addEventListener('click', downloadCustomConfig);
   loadConfigFile.addEventListener('change', handleFileUpload);
 }
@@ -166,6 +172,61 @@ function updateMethodsDropdown() {
 }
 
 // ==========================================
+// Staging System (Building the Multi-Method Config)
+// ==========================================
+function stageCurrentMethod() {
+  const methodId = customBrewMethodEl.value;
+  const methodLabel = customBrewMethodEl.options[customBrewMethodEl.selectedIndex].text;
+
+  const steps = Array.from(document.querySelectorAll('.step-row')).map(row => {
+    const min = row.querySelector('.custom-step-min').value || '0';
+    const sec = (row.querySelector('.custom-step-sec').value || '00').padStart(2, '0');
+    return {
+      time: `${min}:${sec}`,
+      water: row.querySelector('.custom-step-water').value || '',
+      text: row.querySelector('.custom-step-text').value || '...'
+    };
+  });
+
+  // Save the current setup to our global staging object
+  stagedCustomMethods[methodId] = {
+    label: methodLabel,
+    ratio: parseFloat(ratioEl.value),
+    result_type: customProfileEl.value || "Custom dialed profile.",
+    steps: steps
+  };
+
+  renderStagedMethods();
+
+  // Reset the UI so they can easily enter the next method
+  customProfileEl.value = '';
+  customStepsContainer.innerHTML = '';
+  addCustomStepRow();
+  calculateRecipe();
+}
+
+function renderStagedMethods() {
+  const keys = Object.keys(stagedCustomMethods);
+  if (keys.length > 0) {
+    stagedMethodsContainer.classList.remove('hidden');
+    stagedMethodsList.innerHTML = keys.map(k => `
+      <span class="inline-flex items-center gap-1 px-2 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-md border border-indigo-200">
+        ${stagedCustomMethods[k].label}
+        <button onclick="removeStagedMethod('${k}')" class="hover:text-red-500 ml-1 leading-none text-sm">&times;</button>
+      </span>
+    `).join('');
+  } else {
+    stagedMethodsContainer.classList.add('hidden');
+  }
+}
+
+// Accessible from inline HTML onclick
+window.removeStagedMethod = function (id) {
+  delete stagedCustomMethods[id];
+  renderStagedMethods();
+}
+
+// ==========================================
 // Custom Step Row Generator
 // ==========================================
 function addCustomStepRow() {
@@ -174,21 +235,17 @@ function addCustomStepRow() {
 
   div.innerHTML = `
     <div class="flex gap-2 items-center w-full">
-      <!-- Time Dialer -->
       <div class="flex items-center justify-center bg-slate-100 rounded-md py-1 px-1 w-[4.5rem] shrink-0 shadow-inner">
         <input type="number" inputmode="numeric" class="custom-step-min w-6 bg-transparent text-slate-700 text-center text-sm font-bold focus:outline-none" placeholder="0" min="0" max="15" value="0" />
         <span class="text-slate-400 font-black text-xs">:</span>
         <input type="number" inputmode="numeric" class="custom-step-sec w-6 bg-transparent text-slate-700 text-center text-sm font-bold focus:outline-none" placeholder="00" min="0" max="59" value="00" />
       </div>
-      <!-- Water Weight Target -->
       <div class="flex items-center bg-indigo-50 border border-indigo-100 rounded-md shrink-0 px-2 h-full">
         <input type="text" class="custom-step-water w-12 bg-transparent text-indigo-700 py-1 focus:outline-none text-xs font-bold text-center" placeholder="{{water}}" />
         <span class="text-indigo-400 text-[10px] font-bold">g</span>
       </div>
-      <!-- Delete button -->
       <button class="remove-step text-slate-300 hover:text-red-500 font-bold ml-auto px-2 text-xl leading-none">&times;</button>
     </div>
-    <!-- Instruction -->
     <input type="text" class="custom-step-text w-full bg-slate-50 border border-slate-200 text-slate-700 py-1.5 px-3 rounded-md focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="Instruction text..." />
   `;
 
@@ -211,18 +268,12 @@ function addCustomStepRow() {
 // ==========================================
 function downloadCustomConfig() {
   const configName = customNameEl.value || 'My Custom Config';
-  const methodId = customBrewMethodEl.value;
-  const methodLabel = customBrewMethodEl.options[customBrewMethodEl.selectedIndex].text;
 
-  const steps = Array.from(document.querySelectorAll('.step-row')).map(row => {
-    const min = row.querySelector('.custom-step-min').value || '0';
-    const sec = (row.querySelector('.custom-step-sec').value || '00').padStart(2, '0');
-    return {
-      time: `${min}:${sec}`,
-      water: row.querySelector('.custom-step-water').value || '',
-      text: row.querySelector('.custom-step-text').value || 'Wait.'
-    };
-  });
+  // Auto-save whatever is currently on the screen if they haven't explicitly clicked "Save Method" yet
+  const hasUnsavedSteps = document.querySelectorAll('.step-row').length > 0 && document.querySelector('.custom-step-text').value !== '';
+  if (Object.keys(stagedCustomMethods).length === 0 || hasUnsavedSteps) {
+    stageCurrentMethod();
+  }
 
   const yamlObj = {
     id: configName.toLowerCase().replace(/[^a-z0-9]/g, '_'),
@@ -230,14 +281,7 @@ function downloadCustomConfig() {
     default_roast: roastEl.value,
     default_process: fermentationEl.value,
     default_dose: parseFloat(weightEl.value),
-    methods: {
-      [methodId]: {
-        label: methodLabel,
-        ratio: parseFloat(ratioEl.value),
-        result_type: customProfileEl.value || "Custom dialed profile.",
-        steps: steps
-      }
-    }
+    methods: stagedCustomMethods
   };
 
   const yamlStr = jsyaml.dump(yamlObj);

@@ -19,17 +19,54 @@ const tempMatrix = {
   'very_dark': { 'washed': 91, 'washed_ferment': 90, 'yellow_honey': 89, 'red_honey': 88, 'natural': 87, 'natural_ferment': 86 }
 };
 
+// Data-driven recipe steps - Makes it incredibly easy to edit or add methods later
+const recipes = {
+  v60: (water) => {
+    // James Hoffmann 1-Cup V60 is split into five equal 20% pours
+    const chunk = Math.round(water / 5);
+    return [
+      { time: '0:00', text: `Pour <strong class="text-slate-900">${chunk}g</strong> for the bloom. Give the brewer a gentle swirl to mix. <strong>Wait 45 seconds</strong>.` },
+      { time: '0:45', text: `Pour to <strong class="text-slate-900">${chunk * 2}g</strong> over 10 seconds. Pour in slow circles, keeping the kettle spout low. Wait until 1:10.` },
+      { time: '1:10', text: `Pour to <strong class="text-slate-900">${chunk * 3}g</strong> over 10 seconds. <strong>Wait 10 seconds</strong>.` },
+      { time: '1:30', text: `Pour to <strong class="text-slate-900">${chunk * 4}g</strong> over 10 seconds. <strong>Wait 10 seconds</strong>.` },
+      { time: '1:50', text: `Pour to <strong class="text-slate-900">${water}g</strong> over 10 seconds.` },
+      { time: '2:00', text: `Give the brewer a final gentle swirl. Let it draw down (should finish around 3:00).` }
+    ];
+  },
+  french_press: (water) => {
+    // Ultimate French Press technique completely avoids plunging
+    return [
+      { time: '0:00', text: `Pour all <strong class="text-slate-900">${water}g</strong> of water. Do not put the plunger on yet.` },
+      { time: '4:00', text: `Take a spoon and gently stir the crust at the top. Most grounds will fall to the bottom.` },
+      { time: '4:05', text: `Scoop off any remaining foam and floating bits with two spoons and discard.` },
+      { time: '4:10', text: `Wait patiently. Do absolutely nothing for at least 5 minutes to let the microscopic silt settle.` },
+      { time: '9:00+', text: `Place the plunger on the surface as a strainer (<strong>do not plunge down</strong>). Pour gently into your cup and serve.` }
+    ];
+  },
+  aeropress: (water) => {
+    // Ultimate AeroPress uses standard orientation and a vacuum seal
+    return [
+      { time: '0:00', text: `Standard orientation (not inverted). Put dry paper in cap, lock it. Pour all <strong class="text-slate-900">${water}g</strong> of water.` },
+      { time: '0:15', text: `Insert the plunger just slightly into the top chamber. This creates a vacuum and stops the coffee from dripping through.` },
+      { time: '2:00', text: `Carefully hold the base and the plunger together, and give the AeroPress a gentle swirl.` },
+      { time: '2:30', text: `Begin pressing down gently. It should take about 30 seconds to push all the way through.` },
+      { time: '3:00', text: `Stop pressing when you hear the hiss. Pull back slightly on the plunger to stop drips, and serve.` }
+    ];
+  }
+};
+
 // Helper function to build timeline steps with Tailwind styling
 function buildTimelineStep(time, instruction) {
   return `
-        <div class="relative pl-7">
-            <div class="absolute w-3.5 h-3.5 bg-indigo-500 rounded-full -left-[8px] top-1.5 ring-4 ring-white shadow-sm"></div>
-            <div class="text-sm font-black text-indigo-600 tracking-wide mb-1">${time}</div>
-            <div class="text-slate-600 leading-relaxed text-sm md:text-base">${instruction}</div>
-        </div>
-    `;
+    <div class="relative pl-7">
+        <div class="absolute w-3.5 h-3.5 bg-indigo-500 rounded-full -left-[8px] top-1.5 ring-4 ring-white shadow-sm"></div>
+        <div class="text-sm font-black text-indigo-600 tracking-wide mb-1">${time}</div>
+        <div class="text-slate-600 leading-relaxed text-sm md:text-base">${instruction}</div>
+    </div>
+  `;
 }
 
+// Core calculation logic
 function calculateRecipe() {
   const method = methodEl.value;
   const roast = roastEl.value;
@@ -46,29 +83,11 @@ function calculateRecipe() {
   const exactTemp = tempMatrix[roast][fermentation];
   targetTempEl.textContent = exactTemp;
 
-  // Generate Steps
-  let stepsHTML = '';
-
-  if (method === 'v60') {
-    const pourVol = Math.round(totalWater / 5);
-    stepsHTML += buildTimelineStep('0:00', `Pour <strong class="text-slate-900">${pourVol}g</strong> for the bloom. Swirl gently or excavate.`);
-    stepsHTML += buildTimelineStep('0:45', `Pour <strong class="text-slate-900">${pourVol}g</strong> (Scale reads ${pourVol * 2}g). Keep pour centered.`);
-    stepsHTML += buildTimelineStep('1:00', `Pour <strong class="text-slate-900">${pourVol}g</strong> (Scale reads ${pourVol * 3}g).`);
-    stepsHTML += buildTimelineStep('1:15', `Pour <strong class="text-slate-900">${pourVol}g</strong> (Scale reads ${pourVol * 4}g).`);
-    stepsHTML += buildTimelineStep('1:30', `Pour <strong class="text-slate-900">${pourVol}g</strong> (Scale reads ${totalWater}g). Let drawdown finish completely.`);
-  } else if (method === 'french_press') {
-    stepsHTML += buildTimelineStep('0:00', `Pour all <strong class="text-slate-900">${totalWater}g</strong> of water aggressively to wet all grounds.`);
-    stepsHTML += buildTimelineStep('4:00', `Gently stir the crust at the top 3-4 times. It will fall to the bottom.`);
-    stepsHTML += buildTimelineStep('4:05', `Scoop off any remaining foam/chaff from the surface with two spoons.`);
-    stepsHTML += buildTimelineStep('9:00', `Rest plunger gently on surface (do not press down hard). Pour and serve.`);
-  } else if (method === 'aeropress') {
-    stepsHTML += buildTimelineStep('0:00', `Set AeroPress to inverted. Pour <strong class="text-slate-900">${totalWater}g</strong> of water.`);
-    stepsHTML += buildTimelineStep('0:30', `Stir gently back and forth to ensure even saturation.`);
-    stepsHTML += buildTimelineStep('1:30', `Attach cap with rinsed filter paper and carefully flip onto mug.`);
-    stepsHTML += buildTimelineStep('2:00', `Press gently but firmly for about 30 seconds until you hear a hiss.`);
-  }
-
-  recipeStepsEl.innerHTML = stepsHTML;
+  // Generate steps dynamically by mapping over the selected recipe array
+  const currentRecipe = recipes[method](totalWater);
+  recipeStepsEl.innerHTML = currentRecipe
+    .map(step => buildTimelineStep(step.time, step.text))
+    .join('');
 }
 
 // Event Listeners

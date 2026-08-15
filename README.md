@@ -1,3 +1,7 @@
+<img width="1440" height="900" alt="Screenshot 2026-08-15 at 11 04 16 PM" src="https://github.com/user-attachments/assets/53952a0c-67dd-4440-8251-dfa099952f46" />
+
+
+
 ☕ Smart Brew Assistant
 
 A versatile brewing tool helper designed to help you create, manage, and perfect your daily coffee recipes. 

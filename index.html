@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Smart Brew Assistant</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Add JS-YAML library to parse .yaml files -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
     <style>
       input[type="range"] {
@@ -21,6 +20,7 @@
         cursor: pointer;
         margin-top: -8px;
         box-shadow: 0 2px 6px rgba(79, 70, 229, 0.4);
+        transition: all 0.2s;
       }
       input[type="range"]::-webkit-slider-runnable-track {
         width: 100%;
@@ -35,13 +35,30 @@
       input[type="range"]:focus::-webkit-slider-thumb {
         box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.2);
       }
+      input[type="range"]:disabled::-webkit-slider-thumb {
+        background: #94a3b8;
+        cursor: not-allowed;
+        box-shadow: none;
+      }
+      input[type="range"]:disabled::-webkit-slider-runnable-track {
+        background: #cbd5e1;
+        cursor: not-allowed;
+      }
+
+      .time-dial::-webkit-outer-spin-button,
+      .time-dial::-webkit-inner-spin-button {
+        display: none;
+        margin: 0;
+      }
+      .time-dial {
+        -moz-appearance: textfield;
+      }
     </style>
   </head>
 
   <body
     class="bg-gradient-to-br from-slate-100 to-slate-200 min-h-screen font-sans text-slate-800 antialiased p-4 md:p-8 flex flex-col items-center justify-center"
   >
-    <!-- NEW: Main Header -->
     <h1
       class="text-4xl font-black text-slate-900 tracking-tight mb-8 drop-shadow-sm"
     >
@@ -53,19 +70,46 @@
     >
       <!-- Left Panel: Inputs -->
       <div
-        class="w-full md:w-5/12 bg-slate-50/50 p-8 lg:p-10 border-r border-slate-100"
+        class="w-full md:w-5/12 bg-slate-50/50 p-8 lg:p-10 border-r border-slate-100 h-[85vh] overflow-y-auto"
       >
-        <div class="mb-8">
-          <span
-            id="creator-badge"
-            class="inline-block py-1 px-3 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold tracking-wider mb-3 uppercase"
+        <div class="mb-8 flex justify-between items-start">
+          <div>
+            <span
+              id="creator-badge"
+              class="inline-block py-1 px-3 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold tracking-wider mb-3 uppercase"
+            >
+              Loading Directory...
+            </span>
+            <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">
+              Brew Setup
+            </h2>
+            <p class="text-sm text-slate-500 mt-1">Dial in your parameters.</p>
+          </div>
+
+          <label
+            class="cursor-pointer bg-white border border-slate-200 shadow-sm text-slate-600 hover:text-indigo-600 hover:border-indigo-200 text-xs font-bold py-2 px-3 rounded-lg transition-all flex items-center gap-1"
           >
-            Loading Directory...
-          </span>
-          <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">
-            Brew Setup
-          </h2>
-          <p class="text-sm text-slate-500 mt-1">Dial in your parameters.</p>
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+              ></path>
+            </svg>
+            Load .yaml
+            <input
+              type="file"
+              id="load-config-file"
+              accept=".yaml,.yml"
+              class="hidden"
+            />
+          </label>
         </div>
 
         <div class="space-y-5">
@@ -84,7 +128,7 @@
             </select>
           </div>
 
-          <div>
+          <div id="method-container">
             <label
               class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2"
               for="method"
@@ -97,42 +141,45 @@
             ></select>
           </div>
 
-          <div>
-            <label
-              class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2"
-              for="roast"
-              >Roast Level</label
-            >
-            <select
-              id="roast"
-              class="w-full bg-white border border-slate-200 text-slate-700 py-3 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm appearance-none"
-            >
-              <option value="very_light">Very Light</option>
-              <option value="light">Light</option>
-              <option value="medium_light" selected>Medium Light</option>
-              <option value="medium_dark">Medium Dark</option>
-              <option value="dark">Dark</option>
-              <option value="very_dark">Very Dark</option>
-            </select>
-          </div>
-
-          <div>
-            <label
-              class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2"
-              for="fermentation"
-              >Processing</label
-            >
-            <select
-              id="fermentation"
-              class="w-full bg-white border border-slate-200 text-slate-700 py-3 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm appearance-none"
-            >
-              <option value="washed">Washed</option>
-              <option value="washed_ferment">Washed + Ferment</option>
-              <option value="yellow_honey">Yellow Honey</option>
-              <option value="red_honey">Red Honey</option>
-              <option value="natural" selected>Natural</option>
-              <option value="natural_ferment">Natural + Ferment</option>
-            </select>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label
+                class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2"
+                for="roast"
+                >Roast</label
+              >
+              <select
+                id="roast"
+                class="w-full bg-white border border-slate-200 text-slate-700 py-3 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm appearance-none"
+              >
+                <option value="very_light">Very Light</option>
+                <option value="light">Light</option>
+                <option value="medium_light" selected>Medium Light</option>
+                <option value="medium">Medium</option>
+                <option value="medium_dark">Medium Dark</option>
+                <option value="dark">Dark</option>
+                <option value="very_dark">Very Dark</option>
+              </select>
+            </div>
+            <div>
+              <label
+                class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2"
+                for="fermentation"
+                >Process</label
+              >
+              <select
+                id="fermentation"
+                class="w-full bg-white border border-slate-200 text-slate-700 py-3 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm appearance-none"
+              >
+                <option value="washed">Washed</option>
+                <option value="yellow_honey">Yellow Honey</option>
+                <option value="red_honey">Red/Black Honey</option>
+                <option value="natural" selected>Natural</option>
+                <option value="anaerobic_washed">Anaerobic Washed</option>
+                <option value="anaerobic_natural">Anaerobic Natural</option>
+                <option value="carbonic_maceration">Carbonic Mac.</option>
+              </select>
+            </div>
           </div>
 
           <div>
@@ -147,7 +194,7 @@
               value="15"
               min="10"
               max="50"
-              class="w-full bg-white border border-slate-200 text-slate-700 py-3 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm"
+              class="w-full bg-white border border-slate-200 text-slate-700 py-3 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
             />
           </div>
 
@@ -159,6 +206,11 @@
                 >Water Ratio</label
               >
               <span
+                id="ratio-lock-icon"
+                class="text-xs text-slate-400 font-medium"
+                >🔒 Locked</span
+              >
+              <span
                 class="text-sm font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md"
                 >1:<span id="ratio-display">17</span></span
               >
@@ -167,21 +219,130 @@
               type="range"
               id="ratio"
               min="10"
-              max="20"
+              max="25"
+              step="0.5"
               value="17"
               class="w-full mt-2"
+              disabled
             />
+          </div>
+
+          <!-- CUSTOM BUILDER UI -->
+          <div
+            id="custom-builder"
+            class="hidden mt-6 pt-6 border-t border-slate-200 space-y-5"
+          >
+            <div class="flex justify-between items-center">
+              <h3
+                class="text-sm font-bold text-indigo-600 uppercase tracking-wider flex items-center gap-2"
+              >
+                <svg
+                  class="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  ></path>
+                </svg>
+                Custom Editor
+              </h3>
+              <button
+                id="download-config-btn"
+                class="text-xs font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 py-1.5 px-3 rounded-md transition-colors flex items-center gap-1"
+              >
+                <svg
+                  class="w-3 h-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                  ></path>
+                </svg>
+                Save
+              </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label
+                  class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2"
+                  >Config Name</label
+                >
+                <input
+                  type="text"
+                  id="custom-name"
+                  placeholder="My Morning Brew"
+                  class="w-full bg-white border border-slate-200 text-slate-700 py-2 px-3 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                />
+              </div>
+              <div>
+                <label
+                  class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2"
+                  >Brewing Tool</label
+                >
+                <select
+                  id="custom-brew-method"
+                  class="w-full bg-white border border-slate-200 text-slate-700 py-2 px-3 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm appearance-none shadow-sm"
+                >
+                  <option value="v60">Pour Over (V60)</option>
+                  <option value="aeropress">AeroPress</option>
+                  <option value="french_press">French Press</option>
+                  <option value="chemex">Chemex</option>
+                  <option value="clever">Clever Dripper</option>
+                  <option value="cold_brew">Cold Brew</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label
+                class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2"
+                >Expected Coffee Profile</label
+              >
+              <input
+                type="text"
+                id="custom-profile"
+                placeholder="e.g., High clarity, 70-80% grind consistency hit..."
+                class="w-full bg-white border border-slate-200 text-slate-700 py-2 px-3 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+              />
+            </div>
+
+            <div>
+              <label
+                class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2"
+                >Pour Steps</label
+              >
+              <div id="custom-steps-container" class="space-y-3 mb-3">
+                <!-- JS injects rows here -->
+              </div>
+              <button
+                id="add-step-btn"
+                class="w-full py-2 bg-indigo-50 text-indigo-600 text-sm font-bold rounded-lg border border-indigo-100 hover:bg-indigo-100 transition-colors"
+              >
+                + Add Step
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Right Panel: Outputs -->
-      <div class="w-full md:w-7/12 p-8 lg:p-12">
+      <div class="w-full md:w-7/12 p-8 lg:p-12 h-[85vh] overflow-y-auto">
         <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight mb-6">
           Extraction Profile
         </h2>
 
-        <div class="grid grid-cols-2 gap-4 mb-10">
+        <div class="grid grid-cols-2 gap-4 mb-8">
           <div
             class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100/50 p-5 rounded-2xl shadow-sm relative overflow-hidden"
           >
@@ -195,7 +356,6 @@
               ><span class="text-2xl font-semibold text-blue-700 ml-1">g</span>
             </p>
           </div>
-
           <div
             class="bg-gradient-to-br from-rose-50 to-orange-50 border border-rose-100/50 p-5 rounded-2xl shadow-sm relative overflow-hidden"
           >
@@ -212,12 +372,17 @@
         </div>
 
         <div>
-          <h3 id="recipe-title" class="text-lg font-bold text-slate-900 mb-2">
+          <h3 id="recipe-title" class="text-xl font-bold text-slate-900">
             Awaiting Configuration...
           </h3>
+          <p
+            id="recipe-profile"
+            class="text-sm font-medium text-slate-500 mb-6 mt-1 italic"
+          ></p>
+
           <div
             id="recipe-steps"
-            class="relative border-l-2 border-indigo-100 ml-3 mt-6 space-y-7 pb-4"
+            class="relative border-l-2 border-indigo-100 ml-3 mt-4 space-y-7 pb-4"
           >
             <!-- Steps injected via JS -->
           </div>
@@ -225,7 +390,6 @@
       </div>
     </div>
 
-    <!-- main.js does not need type="module" anymore since we are fetching YAML -->
     <script src="js/main.js"></script>
   </body>
 </html>

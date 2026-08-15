@@ -1,0 +1,44 @@
+id: "james_hoffmann"
+name: "James Hoffmann"
+methods:
+  v60:
+    label: "Pour Over (V60)"
+    steps:
+      - time: "0:00"
+        text: 'Pour <strong class="text-slate-900">{{chunk_1}}g</strong> for the bloom. Give the brewer a gentle swirl to mix. <strong>Wait 45 seconds</strong>.'
+      - time: "0:45"
+        text: 'Pour to <strong class="text-slate-900">{{chunk_2}}g</strong> over 10 seconds. Pour in slow circles, keeping the kettle spout low. Wait until 1:10.'
+      - time: "1:10"
+        text: 'Pour to <strong class="text-slate-900">{{chunk_3}}g</strong> over 10 seconds. <strong>Wait 10 seconds</strong>.'
+      - time: "1:30"
+        text: 'Pour to <strong class="text-slate-900">{{chunk_4}}g</strong> over 10 seconds. <strong>Wait 10 seconds</strong>.'
+      - time: "1:50"
+        text: 'Pour to <strong class="text-slate-900">{{water}}g</strong> over 10 seconds.'
+      - time: "2:00"
+        text: 'Give the brewer a final gentle swirl. Let it draw down (should finish around 3:00).'
+  french_press:
+    label: "French Press"
+    steps:
+      - time: "0:00"
+        text: 'Pour all <strong class="text-slate-900">{{water}}g</strong> of water. Do not put the plunger on yet.'
+      - time: "4:00"
+        text: 'Take a spoon and gently stir the crust at the top. Most grounds will fall to the bottom.'
+      - time: "4:05"
+        text: 'Scoop off any remaining foam and floating bits with two spoons and discard.'
+      - time: "4:10"
+        text: 'Wait patiently. Do absolutely nothing for at least 5 minutes to let the microscopic silt settle.'
+      - time: "9:00+"
+        text: 'Place the plunger on the surface as a strainer (<strong>do not plunge down</strong>). Pour gently into your cup and serve.'
+  aeropress:
+    label: "AeroPress"
+    steps:
+      - time: "0:00"
+        text: 'Standard orientation (not inverted). Put dry paper in cap, lock it. Pour all <strong class="text-slate-900">{{water}}g</strong> of water.'
+      - time: "0:15"
+        text: 'Insert the plunger just slightly into the top chamber. This creates a vacuum and stops the coffee from dripping through.'
+      - time: "2:00"
+        text: 'Carefully hold the base and the plunger together, and give the AeroPress a gentle swirl.'
+      - time: "2:30"
+        text: 'Begin pressing down gently. It should take about 30 seconds to push all the way through.'
+      - time: "3:00"
+        text: 'Stop pressing when you hear the hiss. Pull back slightly on the plunger to stop drips, and serve.'

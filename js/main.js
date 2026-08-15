@@ -1,4 +1,18 @@
+// ==========================================
+// CONFIG DIRECTORY LOADER
+// ==========================================
+// Note: "/contents/" is just GitHub's API syntax. It looks directly into your "barista" folder.
+const GITHUB_API_URL = 'https://api.github.com/repos/hkhrithik007/smart-brew-assistant/contents/barista';
+
+// Hardcoded fallback list for local testing so you don't need an index.json file
+const localFallbackFiles = ['james_hoffmann.yaml'];
+
+let allBaristas = [];
+
+// ==========================================
 // DOM Elements
+// ==========================================
+const baristaEl = document.getElementById('barista');
 const methodEl = document.getElementById('method');
 const roastEl = document.getElementById('roast');
 const fermentationEl = document.getElementById('fermentation');
@@ -8,8 +22,9 @@ const ratioDisplay = document.getElementById('ratio-display');
 const targetWaterEl = document.getElementById('target-water');
 const targetTempEl = document.getElementById('target-temp');
 const recipeStepsEl = document.getElementById('recipe-steps');
+const creatorBadgeEl = document.getElementById('creator-badge');
+const recipeTitleEl = document.getElementById('recipe-title');
 
-// 2D Matrix for Temperature Logic based on the chart
 const tempMatrix = {
   'very_light': { 'washed': 96, 'washed_ferment': 95, 'yellow_honey': 94, 'red_honey': 93, 'natural': 92, 'natural_ferment': 91 },
   'light': { 'washed': 95, 'washed_ferment': 94, 'yellow_honey': 93, 'red_honey': 92, 'natural': 91, 'natural_ferment': 90 },
@@ -19,43 +34,80 @@ const tempMatrix = {
   'very_dark': { 'washed': 91, 'washed_ferment': 90, 'yellow_honey': 89, 'red_honey': 88, 'natural': 87, 'natural_ferment': 86 }
 };
 
-// Data-driven recipe steps - Makes it incredibly easy to edit or add methods later
-const recipes = {
-  v60: (water) => {
-    // James Hoffmann 1-Cup V60 is split into five equal 20% pours
-    const chunk = Math.round(water / 5);
-    return [
-      { time: '0:00', text: `Pour <strong class="text-slate-900">${chunk}g</strong> for the bloom. Give the brewer a gentle swirl to mix. <strong>Wait 45 seconds</strong>.` },
-      { time: '0:45', text: `Pour to <strong class="text-slate-900">${chunk * 2}g</strong> over 10 seconds. Pour in slow circles, keeping the kettle spout low. Wait until 1:10.` },
-      { time: '1:10', text: `Pour to <strong class="text-slate-900">${chunk * 3}g</strong> over 10 seconds. <strong>Wait 10 seconds</strong>.` },
-      { time: '1:30', text: `Pour to <strong class="text-slate-900">${chunk * 4}g</strong> over 10 seconds. <strong>Wait 10 seconds</strong>.` },
-      { time: '1:50', text: `Pour to <strong class="text-slate-900">${water}g</strong> over 10 seconds.` },
-      { time: '2:00', text: `Give the brewer a final gentle swirl. Let it draw down (should finish around 3:00).` }
-    ];
-  },
-  french_press: (water) => {
-    // Ultimate French Press technique completely avoids plunging
-    return [
-      { time: '0:00', text: `Pour all <strong class="text-slate-900">${water}g</strong> of water. Do not put the plunger on yet.` },
-      { time: '4:00', text: `Take a spoon and gently stir the crust at the top. Most grounds will fall to the bottom.` },
-      { time: '4:05', text: `Scoop off any remaining foam and floating bits with two spoons and discard.` },
-      { time: '4:10', text: `Wait patiently. Do absolutely nothing for at least 5 minutes to let the microscopic silt settle.` },
-      { time: '9:00+', text: `Place the plunger on the surface as a strainer (<strong>do not plunge down</strong>). Pour gently into your cup and serve.` }
-    ];
-  },
-  aeropress: (water) => {
-    // Ultimate AeroPress uses standard orientation and a vacuum seal
-    return [
-      { time: '0:00', text: `Standard orientation (not inverted). Put dry paper in cap, lock it. Pour all <strong class="text-slate-900">${water}g</strong> of water.` },
-      { time: '0:15', text: `Insert the plunger just slightly into the top chamber. This creates a vacuum and stops the coffee from dripping through.` },
-      { time: '2:00', text: `Carefully hold the base and the plunger together, and give the AeroPress a gentle swirl.` },
-      { time: '2:30', text: `Begin pressing down gently. It should take about 30 seconds to push all the way through.` },
-      { time: '3:00', text: `Stop pressing when you hear the hiss. Pull back slightly on the plunger to stop drips, and serve.` }
-    ];
-  }
-};
+// ==========================================
+// Initialization & Dynamic YAML Loading
+// ==========================================
+async function initializeApp() {
+  try {
+    let yamlFilesToFetch = [];
 
-// Helper function to build timeline steps with Tailwind styling
+    // ATTEMPT 1: Auto-scan the folder using the GitHub API
+    try {
+      const response = await fetch(GITHUB_API_URL);
+      if (response.ok) {
+        const files = await response.json();
+        yamlFilesToFetch = files
+          .filter(f => f.name.endsWith('.yaml') || f.name.endsWith('.yml'))
+          .map(f => f.download_url);
+        console.log("Successfully loaded directory from GitHub API!");
+      } else {
+        throw new Error('API Rate limit or local testing environment');
+      }
+    } catch (e) {
+      // ATTEMPT 2: Use the hardcoded local fallback list
+      console.log("GitHub API unavailable. Using local fallback list...");
+      yamlFilesToFetch = localFallbackFiles.map(fileName => `../barista/${fileName}`);
+    }
+
+    if (yamlFilesToFetch.length === 0) throw new Error("No configs found");
+
+    // Download and Parse each YAML file
+    for (const url of yamlFilesToFetch) {
+      try {
+        const fileRes = await fetch(url);
+        if (!fileRes.ok) continue;
+
+        const yamlText = await fileRes.text();
+        const config = jsyaml.load(yamlText);
+
+        if (config && config.id) {
+          allBaristas.push(config);
+        }
+      } catch (err) {
+        console.warn(`Could not parse YAML from ${url}`, err);
+      }
+    }
+
+    if (allBaristas.length === 0) throw new Error("YAML parsed, but data is empty");
+
+    // Populate Barista Dropdown & Select First Item by Default
+    baristaEl.innerHTML = allBaristas.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+    baristaEl.disabled = false;
+    baristaEl.classList.replace("bg-slate-100", "bg-white");
+
+    // Setup initial methods based on first loaded barista
+    updateMethodsDropdown();
+
+    // Add event listeners
+    baristaEl.addEventListener('change', () => { updateMethodsDropdown(); calculateRecipe(); });
+    methodEl.addEventListener('change', calculateRecipe);
+    roastEl.addEventListener('change', calculateRecipe);
+    fermentationEl.addEventListener('change', calculateRecipe);
+    weightEl.addEventListener('input', calculateRecipe);
+    ratioEl.addEventListener('input', calculateRecipe);
+
+    // Initial render
+    calculateRecipe();
+
+  } catch (error) {
+    console.error("Failed to load configs:", error);
+    showMissingConfigError();
+  }
+}
+
+// ==========================================
+// Helper Functions & Calculation
+// ==========================================
 function buildTimelineStep(time, instruction) {
   return `
     <div class="relative pl-7">
@@ -66,36 +118,70 @@ function buildTimelineStep(time, instruction) {
   `;
 }
 
-// Core calculation logic
+function showMissingConfigError() {
+  creatorBadgeEl.textContent = "Setup Required";
+  creatorBadgeEl.classList.replace("bg-indigo-100", "bg-red-100");
+  creatorBadgeEl.classList.replace("text-indigo-700", "text-red-700");
+
+  baristaEl.innerHTML = '<option disabled selected>No .yaml config files found</option>';
+  methodEl.innerHTML = '<option disabled>N/A</option>';
+
+  recipeTitleEl.textContent = "Awaiting Configuration";
+  recipeStepsEl.innerHTML = buildTimelineStep('Error', 'No barista configuration files were loaded from the directory.');
+}
+
+function updateMethodsDropdown() {
+  const selectedBarista = allBaristas.find(b => b.id === baristaEl.value);
+
+  methodEl.innerHTML = Object.keys(selectedBarista.methods).map(methodKey => {
+    return `<option value="${methodKey}">${selectedBarista.methods[methodKey].label}</option>`;
+  }).join('');
+
+  methodEl.disabled = false;
+  methodEl.classList.replace("bg-slate-100", "bg-white");
+}
+
+// Replaces YAML placeholders like {{water}} with actual math numbers
+function parseYamlTemplate(text, water) {
+  const chunk = Math.round(water / 5);
+  return text
+    .replaceAll('{{water}}', water)
+    .replaceAll('{{chunk_1}}', chunk)
+    .replaceAll('{{chunk_2}}', chunk * 2)
+    .replaceAll('{{chunk_3}}', chunk * 3)
+    .replaceAll('{{chunk_4}}', chunk * 4);
+}
+
 function calculateRecipe() {
-  const method = methodEl.value;
+  if (allBaristas.length === 0) return;
+
+  const activeBarista = allBaristas.find(b => b.id === baristaEl.value);
+  const activeMethodKey = methodEl.value;
+
   const roast = roastEl.value;
   const fermentation = fermentationEl.value;
   const weight = parseFloat(weightEl.value) || 0;
   const ratio = parseFloat(ratioEl.value) || 0;
 
-  // Update UI displays
+  // Update UI Text
+  creatorBadgeEl.textContent = `${activeBarista.name} Methods`;
+  recipeTitleEl.textContent = `${activeBarista.name} Technique`;
+
+  // Update Water/Ratio
   ratioDisplay.textContent = ratio;
   const totalWater = Math.round(weight * ratio);
   targetWaterEl.textContent = totalWater;
 
-  // Fetch precise temperature from the matrix
-  const exactTemp = tempMatrix[roast][fermentation];
-  targetTempEl.textContent = exactTemp;
+  // Update Temperature
+  targetTempEl.textContent = tempMatrix[roast][fermentation];
 
-  // Generate steps dynamically by mapping over the selected recipe array
-  const currentRecipe = recipes[method](totalWater);
-  recipeStepsEl.innerHTML = currentRecipe
-    .map(step => buildTimelineStep(step.time, step.text))
+  // Fetch steps from YAML and run them through our templating function
+  const rawSteps = activeBarista.methods[activeMethodKey].steps;
+
+  recipeStepsEl.innerHTML = rawSteps
+    .map(step => buildTimelineStep(step.time, parseYamlTemplate(step.text, totalWater)))
     .join('');
 }
 
-// Event Listeners
-methodEl.addEventListener('change', calculateRecipe);
-roastEl.addEventListener('change', calculateRecipe);
-fermentationEl.addEventListener('change', calculateRecipe);
-weightEl.addEventListener('input', calculateRecipe);
-ratioEl.addEventListener('input', calculateRecipe);
-
-// Initial render
-calculateRecipe();
+// Boot the app
+initializeApp();

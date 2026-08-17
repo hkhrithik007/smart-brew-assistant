@@ -70,8 +70,9 @@
     </style>
   </head>
 
+  <!-- UPDATED: Tighter padding on mobile to maximize screen space -->
   <body
-    class="bg-gradient-to-br from-stone-100 to-amber-50 dark:from-stone-950 dark:to-stone-900 min-h-screen font-sans text-stone-800 dark:text-stone-200 antialiased p-4 md:p-8 flex flex-col items-center justify-center transition-colors duration-300 relative overflow-x-hidden"
+    class="bg-gradient-to-br from-stone-100 to-amber-50 dark:from-stone-950 dark:to-stone-900 min-h-screen font-sans text-stone-800 dark:text-stone-200 antialiased p-2 sm:p-4 md:p-8 flex flex-col items-center justify-center transition-colors duration-300 relative overflow-x-hidden"
   >
     <!-- DARK MODE TOGGLE (Top Right) -->
     <button
@@ -106,10 +107,10 @@
 
     <!-- HEADER WITH COFFEE MUG ICON -->
     <div
-      class="flex items-center gap-4 mb-8 drop-shadow-sm z-10 relative mt-12 md:mt-0"
+      class="flex items-center gap-3 md:gap-4 mb-6 md:mb-8 drop-shadow-sm z-10 relative mt-12 md:mt-0"
     >
       <svg
-        class="w-10 h-10 text-amber-700 dark:text-amber-500"
+        class="w-8 h-8 md:w-10 md:h-10 text-amber-700 dark:text-amber-500"
         fill="none"
         stroke="currentColor"
         stroke-width="2.5"
@@ -128,7 +129,7 @@
         ></path>
       </svg>
       <h1
-        class="text-3xl md:text-4xl font-black text-stone-900 dark:text-stone-50 tracking-tight"
+        class="text-2xl md:text-4xl font-black text-stone-900 dark:text-stone-50 tracking-tight"
       >
         Smart Brew Assistant
       </h1>
@@ -136,32 +137,34 @@
 
     <!-- MAIN APP CONTAINER -->
     <div
-      class="w-full max-w-5xl bg-white/90 dark:bg-stone-900/90 backdrop-blur-xl rounded-3xl shadow-2xl shadow-amber-900/10 dark:shadow-black/50 overflow-hidden flex flex-col md:flex-row border border-white dark:border-stone-800 z-10 relative transition-colors duration-300"
+      class="w-full max-w-5xl bg-white/90 dark:bg-stone-900/90 backdrop-blur-xl rounded-2xl md:rounded-3xl shadow-2xl shadow-amber-900/10 dark:shadow-black/50 overflow-hidden flex flex-col md:flex-row border border-white dark:border-stone-800 z-10 relative transition-colors duration-300"
     >
       <!-- Left Panel: Inputs -->
       <div
-        class="w-full md:w-5/12 bg-stone-50/60 dark:bg-stone-950/60 p-6 md:p-8 lg:p-10 border-b md:border-b-0 md:border-r border-stone-100 dark:border-stone-800 h-auto md:h-[80vh] overflow-y-visible md:overflow-y-auto transition-colors duration-300"
+        class="w-full md:w-5/12 bg-stone-50/60 dark:bg-stone-950/60 p-4 sm:p-6 lg:p-10 border-b md:border-b-0 md:border-r border-stone-100 dark:border-stone-800 h-auto md:h-[80vh] overflow-y-visible md:overflow-y-auto transition-colors duration-300"
       >
-        <div class="mb-8 flex justify-between items-start">
+        <div class="mb-6 md:mb-8 flex justify-between items-start">
           <div>
             <span
               id="creator-badge"
-              class="inline-block py-1 px-3 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 text-xs font-bold tracking-wider mb-3 uppercase border border-amber-200 dark:border-amber-800"
+              class="inline-block py-1 px-3 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 text-[10px] md:text-xs font-bold tracking-wider mb-2 md:mb-3 uppercase border border-amber-200 dark:border-amber-800"
             >
               Loading Directory...
             </span>
             <h2
-              class="text-2xl font-extrabold text-stone-900 dark:text-stone-50 tracking-tight"
+              class="text-xl md:text-2xl font-extrabold text-stone-900 dark:text-stone-50 tracking-tight"
             >
               Brew Setup
             </h2>
-            <p class="text-sm text-stone-500 dark:text-stone-400 mt-1">
+            <p
+              class="text-xs md:text-sm text-stone-500 dark:text-stone-400 mt-1"
+            >
               Dial in your parameters.
             </p>
           </div>
 
           <label
-            class="cursor-pointer bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 shadow-sm text-stone-600 dark:text-stone-300 hover:text-amber-700 dark:hover:text-amber-400 hover:border-amber-300 dark:hover:border-amber-600 text-xs font-bold py-2 px-3 rounded-lg transition-all flex items-center gap-1"
+            class="cursor-pointer bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 shadow-sm text-stone-600 dark:text-stone-300 hover:text-amber-700 dark:hover:text-amber-400 hover:border-amber-300 dark:hover:border-amber-600 text-xs font-bold py-2 px-3 rounded-lg transition-all flex items-center gap-1 shrink-0"
           >
             <svg
               class="w-4 h-4"
@@ -186,7 +189,7 @@
           </label>
         </div>
 
-        <div class="space-y-5">
+        <div class="space-y-4 md:space-y-5">
           <div>
             <label
               class="block text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2"
@@ -215,7 +218,7 @@
             ></select>
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-2 gap-3 md:gap-4">
             <div>
               <label
                 class="block text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2"
@@ -296,7 +299,7 @@
               max="25"
               step="0.5"
               value="17"
-              class="w-full mt-2"
+              class="w-full mt-2 md:mt-4"
               disabled
             />
           </div>
@@ -304,7 +307,7 @@
           <!-- CUSTOM BUILDER UI -->
           <div
             id="custom-builder"
-            class="hidden mt-6 pt-6 border-t border-stone-200 dark:border-stone-700 space-y-5"
+            class="hidden mt-6 pt-6 border-t border-stone-200 dark:border-stone-700 space-y-4 md:space-y-5"
           >
             <div class="flex justify-between items-center">
               <h3
@@ -325,28 +328,10 @@
                 </svg>
                 Custom Editor
               </h3>
-              <button
-                id="download-config-btn"
-                class="text-xs font-bold text-teal-700 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30 hover:bg-teal-100 dark:hover:bg-teal-900/60 border border-teal-200 dark:border-teal-800 py-1.5 px-3 rounded-md transition-colors flex items-center gap-1"
-              >
-                <svg
-                  class="w-3 h-3"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                  ></path>
-                </svg>
-                Export
-              </button>
+              <!-- Export button moved to the bottom -->
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label
                   class="block text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2"
@@ -356,7 +341,7 @@
                   type="text"
                   id="custom-name"
                   placeholder="Morning Brew"
-                  class="w-full bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 py-2 px-3 rounded-lg focus:ring-2 focus:ring-amber-600 text-sm"
+                  class="w-full bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 py-2.5 px-3 rounded-lg focus:ring-2 focus:ring-amber-600 text-sm"
                 />
               </div>
               <div>
@@ -366,7 +351,7 @@
                 >
                 <select
                   id="custom-brew-method"
-                  class="w-full bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 py-2 px-3 rounded-lg focus:ring-2 focus:ring-amber-600 text-sm appearance-none shadow-sm"
+                  class="w-full bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 py-2.5 px-3 rounded-lg focus:ring-2 focus:ring-amber-600 text-sm appearance-none shadow-sm"
                 >
                   <option value="v60">Pour Over (V60)</option>
                   <option value="aeropress">AeroPress</option>
@@ -390,8 +375,22 @@
                 type="text"
                 id="custom-profile"
                 placeholder="e.g., Syrupy body, high clarity..."
-                class="w-full bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 py-2 px-3 rounded-lg focus:ring-2 focus:ring-amber-600 text-sm"
+                class="w-full bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 py-2.5 px-3 rounded-lg focus:ring-2 focus:ring-amber-600 text-sm"
               />
+            </div>
+
+            <!-- NEW BREW NOTES SECTION -->
+            <div>
+              <label
+                class="block text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2"
+                >Brew Notes</label
+              >
+              <textarea
+                id="custom-notes"
+                rows="2"
+                placeholder="e.g., Swirl aggressively during the bloom..."
+                class="w-full bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 py-2.5 px-3 rounded-lg focus:ring-2 focus:ring-amber-600 text-sm resize-none shadow-sm"
+              ></textarea>
             </div>
 
             <div>
@@ -403,16 +402,16 @@
                 <!-- JS injects rows here -->
               </div>
 
-              <div class="flex flex-col sm:flex-row gap-2">
+              <div class="flex flex-col sm:flex-row gap-2 mt-4">
                 <button
                   id="add-step-btn"
-                  class="w-full sm:w-1/2 py-2 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-sm font-bold rounded-lg border border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
+                  class="w-full sm:w-1/2 py-2.5 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-sm font-bold rounded-lg border border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
                 >
                   + Add Step
                 </button>
                 <button
                   id="stage-method-btn"
-                  class="w-full sm:w-1/2 py-2 bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 text-sm font-bold rounded-lg border border-teal-200 dark:border-teal-800 hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-colors"
+                  class="w-full sm:w-1/2 py-2.5 bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 text-sm font-bold rounded-lg border border-teal-200 dark:border-teal-800 hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-colors"
                 >
                   ✓ Save Method
                 </button>
@@ -421,7 +420,7 @@
 
             <div
               id="staged-methods-container"
-              class="hidden mt-4 p-3 bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-lg"
+              class="hidden mt-2 p-3 bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-lg"
             >
               <p
                 class="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2"
@@ -432,53 +431,82 @@
                 <!-- JS injects badges here -->
               </div>
             </div>
+
+            <!-- EXPORT BUTTON RELOCATED TO BOTTOM -->
+            <div
+              class="pt-4 mt-4 border-t border-stone-200 dark:border-stone-700"
+            >
+              <button
+                id="download-config-btn"
+                class="w-full py-3 bg-amber-600 hover:bg-amber-700 dark:bg-amber-700 dark:hover:bg-amber-600 text-white text-sm font-bold rounded-xl transition-all shadow-md flex justify-center items-center gap-2"
+              >
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                  ></path>
+                </svg>
+                Export Complete Config
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Right Panel: Outputs -->
       <div
-        class="w-full md:w-7/12 p-6 md:p-8 lg:p-12 h-auto md:h-[80vh] overflow-y-visible md:overflow-y-auto"
+        class="w-full md:w-7/12 p-5 sm:p-6 lg:p-12 h-auto md:h-[80vh] overflow-y-visible md:overflow-y-auto"
       >
         <h2
-          class="text-2xl font-extrabold text-stone-900 dark:text-stone-50 tracking-tight mb-6"
+          class="text-xl md:text-2xl font-extrabold text-stone-900 dark:text-stone-50 tracking-tight mb-5 md:mb-6"
         >
           Extraction Profile
         </h2>
 
         <div
           id="metrics-container"
-          class="grid grid-cols-2 gap-4 mb-8 transition-all"
+          class="grid grid-cols-2 gap-3 md:gap-4 mb-6 md:mb-8 transition-all"
         >
           <div
-            class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border border-amber-100/50 dark:border-amber-800/50 p-5 rounded-2xl shadow-sm relative overflow-hidden"
+            class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border border-amber-100/50 dark:border-amber-800/50 p-4 md:p-5 rounded-xl md:rounded-2xl shadow-sm relative overflow-hidden"
           >
             <p
-              class="text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider mb-1"
+              class="text-[10px] md:text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider mb-1"
             >
               Target Yield
             </p>
-            <p class="text-4xl font-black text-amber-950 dark:text-amber-100">
+            <p
+              class="text-3xl md:text-4xl font-black text-amber-950 dark:text-amber-100"
+            >
               <span id="target-water">255</span
               ><span
-                class="text-2xl font-semibold text-amber-700 dark:text-amber-500 ml-1"
+                class="text-xl md:text-2xl font-semibold text-amber-700 dark:text-amber-500 ml-1"
                 >g</span
               >
             </p>
           </div>
           <div
             id="temp-card"
-            class="bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-900/30 dark:to-rose-900/30 border border-red-100/50 dark:border-red-800/50 p-5 rounded-2xl shadow-sm relative overflow-hidden transition-all"
+            class="bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-900/30 dark:to-rose-900/30 border border-red-100/50 dark:border-red-800/50 p-4 md:p-5 rounded-xl md:rounded-2xl shadow-sm relative overflow-hidden transition-all"
           >
             <p
-              class="text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider mb-1"
+              class="text-[10px] md:text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider mb-1"
             >
               Brew Temp
             </p>
-            <p class="text-4xl font-black text-red-950 dark:text-red-100">
+            <p
+              class="text-3xl md:text-4xl font-black text-red-950 dark:text-red-100"
+            >
               <span id="target-temp">90</span
               ><span
-                class="text-2xl font-semibold text-red-700 dark:text-red-500"
+                class="text-xl md:text-2xl font-semibold text-red-700 dark:text-red-500"
                 >°C</span
               >
             </p>
@@ -488,18 +516,24 @@
         <div>
           <h3
             id="recipe-title"
-            class="text-xl font-bold text-stone-900 dark:text-stone-50"
+            class="text-lg md:text-xl font-bold text-stone-900 dark:text-stone-50"
           >
             Awaiting Configuration...
           </h3>
           <p
             id="recipe-profile"
-            class="text-sm font-medium text-stone-500 dark:text-stone-400 mb-6 mt-1 italic"
+            class="text-xs md:text-sm font-medium text-stone-500 dark:text-stone-400 mt-1 italic"
+          ></p>
+
+          <!-- NEW RECIPE NOTES RENDER -->
+          <p
+            id="recipe-notes"
+            class="text-xs md:text-sm text-stone-600 dark:text-stone-300 mt-4 bg-stone-100 dark:bg-stone-800/50 p-3 md:p-4 rounded-lg border border-stone-200 dark:border-stone-700 hidden leading-relaxed"
           ></p>
 
           <div
             id="recipe-steps"
-            class="relative border-l-2 border-amber-200 dark:border-amber-800/50 ml-3 mt-4 space-y-7 pb-4"
+            class="relative border-l-2 border-amber-200 dark:border-amber-800/50 ml-2 md:ml-3 mt-6 space-y-6 md:space-y-7 pb-4"
           >
             <!-- Steps injected via JS -->
           </div>
@@ -509,32 +543,24 @@
 
     <!-- CUSTOM TRADEMARK FOOTER -->
     <div
-      class="mt-6 text-center flex items-center justify-center gap-3 text-sm font-semibold text-stone-500/80 dark:text-stone-500 tracking-wide z-10 relative"
+      class="mt-6 md:mt-8 mb-4 text-center flex items-center justify-center gap-2 md:gap-3 text-xs md:text-sm font-semibold text-stone-500/80 dark:text-stone-500 tracking-wide z-10 relative"
     >
       <span>&copy; 2026 Smart Brew Assistant&trade;</span>
       <span class="w-1 h-1 rounded-full bg-stone-400 dark:bg-stone-600"></span>
-      <span>Crafted by Hritik Sharma</span>
+      <span>Crafted by Hritik sharma</span>
     </div>
 
-    <!-- ========================================== -->
     <!-- BACKGROUND IMAGE DECORATIONS -->
-    <!-- ========================================== -->
-
-    <!-- Original Coffee Mug -->
     <img
       src="images/coffee.png"
       alt="Coffee Graphic"
       class="hidden xl:block fixed bottom-[-20px] right-[25%] w-[22rem] opacity-20 dark:opacity-10 drop-shadow-2xl pointer-events-none z-0 transform -rotate-6 grayscale-[30%] dark:grayscale-[50%] mix-blend-multiply dark:mix-blend-screen"
     />
-
-    <!-- Image 1 (Bottom Right) -->
     <img
       src="images/1.png"
       alt="Decor Right"
       class="hidden xl:block fixed -bottom-8 -right-8 w-[24rem] opacity-30 dark:opacity-20 drop-shadow-2xl pointer-events-none z-0 transform rotate-12 grayscale-[30%] dark:grayscale-[50%] mix-blend-multiply dark:mix-blend-screen"
     />
-
-    <!-- Image 2 (Top Left) -->
     <img
       src="images/2.png"
       alt="Decor Left"

@@ -1,16 +1,15 @@
 // ==========================================
-// TRIPLE-TIER FALLBACK LOADER
+// PARALLEL CONFIG LOADER (Optimized)
 // ==========================================
 const GITHUB_API_URL = 'https://api.github.com/repos/hkhrithik007/smart-brew-assistant/contents/barista';
 const LOCAL_INDEX_URL = '../barista/index.json';
 
-// TIER 3 EMERGENCY FALLBACK: If GitHub blocks the API limit AND you have no local index.json
 const EMERGENCY_FALLBACK_DATA = [
   {
     id: "james_hoffmann", name: "James Hoffmann", default_roast: "medium_light", default_process: "washed", default_dose: 15,
     methods: {
       v60: {
-        label: "Pour Over (V60)", ratio: 16.6, result_type: "Clean, sweet, and bright cup.", steps: [
+        label: "Pour Over (V60)", ratio: 16.6, result_type: "Clean, sweet, and bright cup.", notes: "Use water just off the boil. Wait for the coffee bed to fully settle before enjoying.", steps: [
           { time: "0:00", water: "{{chunk_1}}", text: "Pour for the bloom. Give the brewer a gentle swirl. Wait 45 seconds." },
           { time: "0:45", water: "{{chunk_2}}", text: "Pour over 10 seconds. Pour in slow circles. Wait until 1:10." },
           { time: "1:10", water: "{{chunk_3}}", text: "Pour over 10 seconds. Wait 10 seconds." },
@@ -44,6 +43,7 @@ const recipeStepsEl = document.getElementById('recipe-steps');
 const creatorBadgeEl = document.getElementById('creator-badge');
 const recipeTitleEl = document.getElementById('recipe-title');
 const recipeProfileEl = document.getElementById('recipe-profile');
+const recipeNotesEl = document.getElementById('recipe-notes'); // NEW
 
 const metricsContainer = document.getElementById('metrics-container');
 const tempCardEl = document.getElementById('temp-card');
@@ -53,6 +53,7 @@ const customBuilder = document.getElementById('custom-builder');
 const customNameEl = document.getElementById('custom-name');
 const customBrewMethodEl = document.getElementById('custom-brew-method');
 const customProfileEl = document.getElementById('custom-profile');
+const customNotesEl = document.getElementById('custom-notes'); // NEW
 const customStepsContainer = document.getElementById('custom-steps-container');
 const addStepBtn = document.getElementById('add-step-btn');
 const stageMethodBtn = document.getElementById('stage-method-btn');
@@ -94,42 +95,43 @@ async function initializeApp() {
     let yamlFilesToFetch = [];
     let loadSuccess = false;
 
-    // TIER 1: Try GitHub API (Live)
+    // TIER 1: Check Local `index.json` first (Lightning fast for GitHub Pages hosting)
     try {
-      const response = await fetch(GITHUB_API_URL);
-      if (response.ok) {
-        const files = await response.json();
-        yamlFilesToFetch = files.filter(f => f.name.endsWith('.yaml') || f.name.endsWith('.yml')).map(f => f.download_url);
+      const indexResponse = await fetch(LOCAL_INDEX_URL);
+      if (indexResponse.ok) {
+        const localFiles = await indexResponse.json();
+        yamlFilesToFetch = localFiles.map(fileName => `../barista/${fileName}`);
         loadSuccess = true;
       }
-    } catch (e) { console.log("GitHub API blocked/failed. Falling back to local..."); }
+    } catch (e) { console.log("Local index not found, falling back to GitHub API..."); }
 
-    // TIER 2: Try Local index.json (Development)
+    // TIER 2: Check live GitHub API (Slow, subject to rate limits)
     if (!loadSuccess) {
       try {
-        const indexResponse = await fetch(LOCAL_INDEX_URL);
-        if (indexResponse.ok) {
-          const localFiles = await indexResponse.json();
-          yamlFilesToFetch = localFiles.map(fileName => `../barista/${fileName}`);
+        const response = await fetch(GITHUB_API_URL);
+        if (response.ok) {
+          const files = await response.json();
+          yamlFilesToFetch = files.filter(f => f.name.endsWith('.yaml') || f.name.endsWith('.yml')).map(f => f.download_url);
           loadSuccess = true;
         }
-      } catch (e) { console.log("Local fetch failed (CORS or missing file). Triggering emergency fallback..."); }
+      } catch (e) { console.log("GitHub API failed."); }
     }
 
-    // Process TIER 1 or 2 downloads
+    // TIER 3: Fetch all files simultaneously in PARALLEL (Massive Speed Boost)
     if (loadSuccess && yamlFilesToFetch.length > 0) {
-      for (const url of yamlFilesToFetch) {
+      await Promise.all(yamlFilesToFetch.map(async (url) => {
         try {
           const cacheBusterUrl = url.includes('github') ? url : url + '?t=' + new Date().getTime();
           const fileRes = await fetch(cacheBusterUrl);
-          if (!fileRes.ok) continue;
-          const config = jsyaml.load(await fileRes.text());
-          if (config && config.id) allBaristas.push(config);
+          if (fileRes.ok) {
+            const config = jsyaml.load(await fileRes.text());
+            if (config && config.id) allBaristas.push(config);
+          }
         } catch (err) { console.warn(`Skipped YAML`, err); }
-      }
+      }));
     }
 
-    // TIER 3: Emergency Fallback
+    // TIER 4: Emergency Fallback
     if (allBaristas.length === 0) {
       console.warn("Using Emergency Hardcoded Fallback.");
       allBaristas = [...EMERGENCY_FALLBACK_DATA];
@@ -206,6 +208,7 @@ function setupEventListeners() {
   customNameEl.addEventListener('input', calculateRecipe);
   customBrewMethodEl.addEventListener('change', calculateRecipe);
   customProfileEl.addEventListener('input', calculateRecipe);
+  customNotesEl.addEventListener('input', calculateRecipe); // Added listener for dynamic Notes
 
   addStepBtn.addEventListener('click', () => { addCustomStepRow(); calculateRecipe(); });
   stageMethodBtn.addEventListener('click', stageCurrentMethod);
@@ -267,11 +270,13 @@ function stageCurrentMethod() {
     label: methodLabel,
     ratio: parseFloat(ratioEl.value),
     result_type: customProfileEl.value || "Custom dialed profile.",
+    notes: customNotesEl.value || "", // Bundles notes with export!
     steps: steps
   };
 
   renderStagedMethods();
   customProfileEl.value = '';
+  customNotesEl.value = '';
   customStepsContainer.innerHTML = '';
   addCustomStepRow();
   calculateRecipe();
@@ -312,7 +317,6 @@ function addCustomStepRow() {
         <input type="number" inputmode="numeric" class="custom-step-sec w-6 bg-transparent text-stone-700 dark:text-stone-300 text-center text-sm font-bold focus:outline-none" placeholder="00" min="0" max="59" value="00" />
       </div>
       <div class="flex items-center bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 rounded-md shrink-0 px-2 h-full">
-        <!-- Changed placeholder="{{water}}" to placeholder="water" below -->
         <input type="text" class="custom-step-water w-12 bg-transparent text-amber-700 dark:text-amber-400 py-1 focus:outline-none text-xs font-bold text-center" placeholder="water" />
         <span class="text-amber-500 text-[10px] font-bold">g</span>
       </div>
@@ -396,7 +400,7 @@ function handleFileUpload(e) {
 function buildTimelineStep(time, water, instruction) {
   const waterBadge = water ? `<span class="ml-2 text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/50 border border-amber-200 dark:border-amber-700/50 px-2 py-0.5 rounded-full">${water}g</span>` : '';
   return `
-    <div class="relative pl-7">
+    <div class="relative pl-6 md:pl-7">
         <div class="absolute w-3.5 h-3.5 bg-amber-600 rounded-full -left-[8px] top-1.5 ring-4 ring-white dark:ring-stone-900 shadow-sm transition-colors duration-300"></div>
         <div class="flex items-center mb-1">
           <div class="text-sm font-black text-amber-700 dark:text-amber-500 tracking-wide">${time}</div>
@@ -452,9 +456,17 @@ function calculateRecipe() {
 
   if (isCustom) {
     creatorBadgeEl.textContent = `Custom Workspace`;
-    creatorBadgeEl.className = "inline-block py-1 px-3 rounded-full bg-teal-100 dark:bg-teal-900/40 text-teal-800 dark:text-teal-300 text-xs font-bold tracking-wider mb-3 uppercase border border-teal-200 dark:border-teal-800";
+    creatorBadgeEl.className = "inline-block py-1 px-3 rounded-full bg-teal-100 dark:bg-teal-900/40 text-teal-800 dark:text-teal-300 text-[10px] md:text-xs font-bold tracking-wider mb-2 md:mb-3 uppercase border border-teal-200 dark:border-teal-800";
     recipeTitleEl.textContent = customNameEl.value || 'Untitled Brew Method';
     recipeProfileEl.textContent = customProfileEl.value ? `Target: ${customProfileEl.value}` : '';
+
+    // Live update notes for custom editor
+    if (customNotesEl.value) {
+      recipeNotesEl.textContent = customNotesEl.value;
+      recipeNotesEl.classList.remove('hidden');
+    } else {
+      recipeNotesEl.classList.add('hidden');
+    }
 
     const customSteps = Array.from(document.querySelectorAll('.step-row')).map(row => {
       const min = row.querySelector('.custom-step-min').value || '0';
@@ -476,9 +488,17 @@ function calculateRecipe() {
 
     if (activeBarista && activeMethodData) {
       creatorBadgeEl.textContent = `${activeBarista.name} Config`;
-      creatorBadgeEl.className = "inline-block py-1 px-3 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 text-xs font-bold tracking-wider mb-3 uppercase border border-amber-200 dark:border-amber-800";
+      creatorBadgeEl.className = "inline-block py-1 px-3 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 text-[10px] md:text-xs font-bold tracking-wider mb-2 md:mb-3 uppercase border border-amber-200 dark:border-amber-800";
       recipeTitleEl.textContent = `${activeMethodData.label} Technique`;
       recipeProfileEl.textContent = activeMethodData.result_type ? `Target: ${activeMethodData.result_type}` : '';
+
+      // Update notes for preconfigured files
+      if (activeMethodData.notes) {
+        recipeNotesEl.textContent = activeMethodData.notes;
+        recipeNotesEl.classList.remove('hidden');
+      } else {
+        recipeNotesEl.classList.add('hidden');
+      }
 
       recipeStepsEl.innerHTML = activeMethodData.steps.map(step =>
         buildTimelineStep(step.time, parseYamlTemplate(String(step.water || ''), totalWater), parseYamlTemplate(step.text, totalWater))

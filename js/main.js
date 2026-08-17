@@ -312,7 +312,8 @@ function addCustomStepRow() {
         <input type="number" inputmode="numeric" class="custom-step-sec w-6 bg-transparent text-stone-700 dark:text-stone-300 text-center text-sm font-bold focus:outline-none" placeholder="00" min="0" max="59" value="00" />
       </div>
       <div class="flex items-center bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 rounded-md shrink-0 px-2 h-full">
-        <input type="text" class="custom-step-water w-12 bg-transparent text-amber-700 dark:text-amber-400 py-1 focus:outline-none text-xs font-bold text-center" placeholder="{{water}}" />
+        <!-- Changed placeholder="{{water}}" to placeholder="water" below -->
+        <input type="text" class="custom-step-water w-12 bg-transparent text-amber-700 dark:text-amber-400 py-1 focus:outline-none text-xs font-bold text-center" placeholder="water" />
         <span class="text-amber-500 text-[10px] font-bold">g</span>
       </div>
       <button class="remove-step text-stone-300 dark:text-stone-600 hover:text-red-500 font-bold ml-auto px-2 text-xl leading-none">&times;</button>

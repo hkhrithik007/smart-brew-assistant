@@ -70,11 +70,10 @@
     </style>
   </head>
 
-  <!-- UPDATED: Tighter padding on mobile to maximize screen space -->
   <body
     class="bg-gradient-to-br from-stone-100 to-amber-50 dark:from-stone-950 dark:to-stone-900 min-h-screen font-sans text-stone-800 dark:text-stone-200 antialiased p-2 sm:p-4 md:p-8 flex flex-col items-center justify-center transition-colors duration-300 relative overflow-x-hidden"
   >
-    <!-- DARK MODE TOGGLE (Top Right) -->
+    <!-- DARK MODE TOGGLE -->
     <button
       id="theme-toggle"
       class="absolute top-4 right-4 md:top-8 md:right-8 p-3 rounded-full bg-white/80 dark:bg-stone-800/80 backdrop-blur-md shadow-sm border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-amber-500 hover:scale-105 transition-all z-50"
@@ -136,12 +135,14 @@
     </div>
 
     <!-- MAIN APP CONTAINER -->
+    <!-- CHANGED: flex-col to flex-col-reverse so Right Panel loads on top on mobile! -->
     <div
-      class="w-full max-w-5xl bg-white/90 dark:bg-stone-900/90 backdrop-blur-xl rounded-2xl md:rounded-3xl shadow-2xl shadow-amber-900/10 dark:shadow-black/50 overflow-hidden flex flex-col md:flex-row border border-white dark:border-stone-800 z-10 relative transition-colors duration-300"
+      class="w-full max-w-5xl bg-white/90 dark:bg-stone-900/90 backdrop-blur-xl rounded-2xl md:rounded-3xl shadow-2xl shadow-amber-900/10 dark:shadow-black/50 overflow-hidden flex flex-col-reverse md:flex-row border border-white dark:border-stone-800 z-10 relative transition-colors duration-300"
     >
-      <!-- Left Panel: Inputs -->
+      <!-- Left Panel: Inputs (NOW ON BOTTOM FOR MOBILE THUMBS) -->
+      <!-- CHANGED: Removed bottom border, added right border for desktop only -->
       <div
-        class="w-full md:w-5/12 bg-stone-50/60 dark:bg-stone-950/60 p-4 sm:p-6 lg:p-10 border-b md:border-b-0 md:border-r border-stone-100 dark:border-stone-800 h-auto md:h-[80vh] overflow-y-visible md:overflow-y-auto transition-colors duration-300"
+        class="w-full md:w-5/12 bg-stone-50/60 dark:bg-stone-950/60 p-4 sm:p-6 lg:p-10 border-r-0 md:border-r border-stone-100 dark:border-stone-800 h-auto md:h-[80vh] overflow-y-visible md:overflow-y-auto transition-colors duration-300"
       >
         <div class="mb-6 md:mb-8 flex justify-between items-start">
           <div>
@@ -328,7 +329,6 @@
                 </svg>
                 Custom Editor
               </h3>
-              <!-- Export button moved to the bottom -->
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -379,7 +379,6 @@
               />
             </div>
 
-            <!-- NEW BREW NOTES SECTION -->
             <div>
               <label
                 class="block text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2"
@@ -432,7 +431,6 @@
               </div>
             </div>
 
-            <!-- EXPORT BUTTON RELOCATED TO BOTTOM -->
             <div
               class="pt-4 mt-4 border-t border-stone-200 dark:border-stone-700"
             >
@@ -460,9 +458,10 @@
         </div>
       </div>
 
-      <!-- Right Panel: Outputs -->
+      <!-- Right Panel: Outputs (NOW ON TOP FOR MOBILE EYES) -->
+      <!-- CHANGED: Added max-h-[50vh] and bottom border for mobile to create a scrolling preview window -->
       <div
-        class="w-full md:w-7/12 p-5 sm:p-6 lg:p-12 h-auto md:h-[80vh] overflow-y-visible md:overflow-y-auto"
+        class="w-full md:w-7/12 p-5 sm:p-6 lg:p-12 max-h-[50vh] md:max-h-none h-auto md:h-[80vh] overflow-y-auto border-b md:border-b-0 border-stone-200 dark:border-stone-800 transition-colors duration-300"
       >
         <h2
           class="text-xl md:text-2xl font-extrabold text-stone-900 dark:text-stone-50 tracking-tight mb-5 md:mb-6"
@@ -525,7 +524,6 @@
             class="text-xs md:text-sm font-medium text-stone-500 dark:text-stone-400 mt-1 italic"
           ></p>
 
-          <!-- NEW RECIPE NOTES RENDER -->
           <p
             id="recipe-notes"
             class="text-xs md:text-sm text-stone-600 dark:text-stone-300 mt-4 bg-stone-100 dark:bg-stone-800/50 p-3 md:p-4 rounded-lg border border-stone-200 dark:border-stone-700 hidden leading-relaxed"
@@ -547,7 +545,7 @@
     >
       <span>&copy; 2026 Smart Brew Assistant&trade;</span>
       <span class="w-1 h-1 rounded-full bg-stone-400 dark:bg-stone-600"></span>
-      <span>Crafted by Hritik sharma</span>
+      <span>Crafted by Hritik Sharma</span>
     </div>
 
     <!-- BACKGROUND IMAGE DECORATIONS -->

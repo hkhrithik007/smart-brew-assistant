@@ -73,7 +73,7 @@
   <body
     class="bg-gradient-to-br from-stone-100 to-amber-50 dark:from-stone-950 dark:to-stone-900 min-h-screen font-sans text-stone-800 dark:text-stone-200 antialiased p-2 sm:p-4 md:p-8 flex flex-col items-center justify-center transition-colors duration-300 relative overflow-x-hidden"
   >
-    <!-- DARK MODE TOGGLE -->
+    <!-- DARK MODE TOGGLE (Top Right) -->
     <button
       id="theme-toggle"
       class="absolute top-4 right-4 md:top-8 md:right-8 p-3 rounded-full bg-white/80 dark:bg-stone-800/80 backdrop-blur-md shadow-sm border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-amber-500 hover:scale-105 transition-all z-50"
@@ -134,15 +134,13 @@
       </h1>
     </div>
 
-    <!-- MAIN APP CONTAINER -->
-    <!-- CHANGED: flex-col to flex-col-reverse so Right Panel loads on top on mobile! -->
+    <!-- MAIN APP CONTAINER (Reverted to flex-col for normal top-down stacking) -->
     <div
-      class="w-full max-w-5xl bg-white/90 dark:bg-stone-900/90 backdrop-blur-xl rounded-2xl md:rounded-3xl shadow-2xl shadow-amber-900/10 dark:shadow-black/50 overflow-hidden flex flex-col-reverse md:flex-row border border-white dark:border-stone-800 z-10 relative transition-colors duration-300"
+      class="w-full max-w-5xl bg-white/90 dark:bg-stone-900/90 backdrop-blur-xl rounded-2xl md:rounded-3xl shadow-2xl shadow-amber-900/10 dark:shadow-black/50 overflow-hidden flex flex-col md:flex-row border border-white dark:border-stone-800 z-10 relative transition-colors duration-300"
     >
-      <!-- Left Panel: Inputs (NOW ON BOTTOM FOR MOBILE THUMBS) -->
-      <!-- CHANGED: Removed bottom border, added right border for desktop only -->
+      <!-- Left Panel: Inputs (Now back on top for mobile) -->
       <div
-        class="w-full md:w-5/12 bg-stone-50/60 dark:bg-stone-950/60 p-4 sm:p-6 lg:p-10 border-r-0 md:border-r border-stone-100 dark:border-stone-800 h-auto md:h-[80vh] overflow-y-visible md:overflow-y-auto transition-colors duration-300"
+        class="w-full md:w-5/12 bg-stone-50/60 dark:bg-stone-950/60 p-4 sm:p-6 lg:p-10 border-b md:border-b-0 md:border-r border-stone-100 dark:border-stone-800 h-auto md:h-[80vh] overflow-y-visible md:overflow-y-auto transition-colors duration-300"
       >
         <div class="mb-6 md:mb-8 flex justify-between items-start">
           <div>
@@ -393,10 +391,39 @@
             </div>
 
             <div>
-              <label
-                class="block text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2"
-                >Pour Steps</label
-              >
+              <!-- NEW PREVIEW BUTTON -->
+              <div class="flex justify-between items-center mb-2">
+                <label
+                  class="block text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider"
+                  >Pour Steps</label
+                >
+                <button
+                  id="preview-timeline-btn"
+                  class="md:hidden text-[10px] font-bold text-teal-700 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30 hover:bg-teal-100 dark:hover:bg-teal-900/50 py-1.5 px-3 rounded-md border border-teal-200 dark:border-teal-800 transition-colors flex items-center gap-1 shadow-sm"
+                >
+                  <svg
+                    class="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    ></path>
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                    ></path>
+                  </svg>
+                  Preview Recipe
+                </button>
+              </div>
+
               <div id="custom-steps-container" class="space-y-3 mb-3">
                 <!-- JS injects rows here -->
               </div>
@@ -458,10 +485,9 @@
         </div>
       </div>
 
-      <!-- Right Panel: Outputs (NOW ON TOP FOR MOBILE EYES) -->
-      <!-- CHANGED: Added max-h-[50vh] and bottom border for mobile to create a scrolling preview window -->
+      <!-- Right Panel: Outputs (Back on bottom for mobile) -->
       <div
-        class="w-full md:w-7/12 p-5 sm:p-6 lg:p-12 max-h-[50vh] md:max-h-none h-auto md:h-[80vh] overflow-y-auto border-b md:border-b-0 border-stone-200 dark:border-stone-800 transition-colors duration-300"
+        class="w-full md:w-7/12 p-5 sm:p-6 lg:p-12 h-auto md:h-[80vh] overflow-y-auto transition-colors duration-300"
       >
         <h2
           class="text-xl md:text-2xl font-extrabold text-stone-900 dark:text-stone-50 tracking-tight mb-5 md:mb-6"
@@ -564,6 +590,68 @@
       alt="Decor Left"
       class="hidden xl:block fixed -top-8 -left-8 w-[20rem] opacity-30 dark:opacity-20 drop-shadow-2xl pointer-events-none z-0 transform -rotate-12 grayscale-[30%] dark:grayscale-[50%] mix-blend-multiply dark:mix-blend-screen"
     />
+
+    <!-- ========================================== -->
+    <!-- NEW MOBILE PREVIEW MODAL -->
+    <!-- ========================================== -->
+    <div
+      id="recipe-preview-modal"
+      class="hidden fixed inset-0 z-[100] bg-stone-900/80 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 transition-opacity duration-300"
+    >
+      <div
+        class="bg-white dark:bg-stone-900 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] transform scale-95 transition-transform duration-300"
+      >
+        <div
+          class="p-4 border-b border-stone-200 dark:border-stone-800 flex justify-between items-center bg-stone-50 dark:bg-stone-950"
+        >
+          <h3
+            class="font-bold text-stone-800 dark:text-stone-100 flex items-center gap-2"
+          >
+            <svg
+              class="w-5 h-5 text-amber-600 dark:text-amber-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              ></path>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+              ></path>
+            </svg>
+            Recipe Preview
+          </h3>
+          <button
+            id="close-preview-btn"
+            class="text-stone-400 hover:text-red-500 bg-white dark:bg-stone-800 rounded-full p-1 border border-stone-200 dark:border-stone-700 transition-colors"
+          >
+            <svg
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
+            </svg>
+          </button>
+        </div>
+        <div class="p-6 overflow-y-auto" id="modal-content-area">
+          <!-- Cloned recipe steps go here via JS -->
+        </div>
+      </div>
+    </div>
 
     <script src="js/main.js"></script>
   </body>

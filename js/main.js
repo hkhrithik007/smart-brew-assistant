@@ -43,7 +43,7 @@ const recipeStepsEl = document.getElementById('recipe-steps');
 const creatorBadgeEl = document.getElementById('creator-badge');
 const recipeTitleEl = document.getElementById('recipe-title');
 const recipeProfileEl = document.getElementById('recipe-profile');
-const recipeNotesEl = document.getElementById('recipe-notes'); // NEW
+const recipeNotesEl = document.getElementById('recipe-notes');
 
 const metricsContainer = document.getElementById('metrics-container');
 const tempCardEl = document.getElementById('temp-card');
@@ -53,7 +53,7 @@ const customBuilder = document.getElementById('custom-builder');
 const customNameEl = document.getElementById('custom-name');
 const customBrewMethodEl = document.getElementById('custom-brew-method');
 const customProfileEl = document.getElementById('custom-profile');
-const customNotesEl = document.getElementById('custom-notes'); // NEW
+const customNotesEl = document.getElementById('custom-notes');
 const customStepsContainer = document.getElementById('custom-steps-container');
 const addStepBtn = document.getElementById('add-step-btn');
 const stageMethodBtn = document.getElementById('stage-method-btn');
@@ -66,6 +66,12 @@ const stagedMethodsList = document.getElementById('staged-methods-list');
 const themeToggleBtn = document.getElementById('theme-toggle');
 const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
 const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+
+// Preview Modal Elements
+const previewTimelineBtn = document.getElementById('preview-timeline-btn');
+const recipePreviewModal = document.getElementById('recipe-preview-modal');
+const closePreviewBtn = document.getElementById('close-preview-btn');
+const modalContentArea = document.getElementById('modal-content-area');
 
 // ==========================================
 // Dynamic Temperature Logic
@@ -95,7 +101,7 @@ async function initializeApp() {
     let yamlFilesToFetch = [];
     let loadSuccess = false;
 
-    // TIER 1: Check Local `index.json` first (Lightning fast for GitHub Pages hosting)
+    // TIER 1: Check Local `index.json` first
     try {
       const indexResponse = await fetch(LOCAL_INDEX_URL);
       if (indexResponse.ok) {
@@ -105,7 +111,7 @@ async function initializeApp() {
       }
     } catch (e) { console.log("Local index not found, falling back to GitHub API..."); }
 
-    // TIER 2: Check live GitHub API (Slow, subject to rate limits)
+    // TIER 2: Check live GitHub API 
     if (!loadSuccess) {
       try {
         const response = await fetch(GITHUB_API_URL);
@@ -117,7 +123,7 @@ async function initializeApp() {
       } catch (e) { console.log("GitHub API failed."); }
     }
 
-    // TIER 3: Fetch all files simultaneously in PARALLEL (Massive Speed Boost)
+    // TIER 3: Fetch all files simultaneously in PARALLEL 
     if (loadSuccess && yamlFilesToFetch.length > 0) {
       await Promise.all(yamlFilesToFetch.map(async (url) => {
         try {
@@ -208,12 +214,40 @@ function setupEventListeners() {
   customNameEl.addEventListener('input', calculateRecipe);
   customBrewMethodEl.addEventListener('change', calculateRecipe);
   customProfileEl.addEventListener('input', calculateRecipe);
-  customNotesEl.addEventListener('input', calculateRecipe); // Added listener for dynamic Notes
+  customNotesEl.addEventListener('input', calculateRecipe);
 
   addStepBtn.addEventListener('click', () => { addCustomStepRow(); calculateRecipe(); });
   stageMethodBtn.addEventListener('click', stageCurrentMethod);
   downloadConfigBtn.addEventListener('click', downloadCustomConfig);
   loadConfigFile.addEventListener('change', handleFileUpload);
+
+  // Modal Listeners
+  if (previewTimelineBtn) {
+    previewTimelineBtn.addEventListener('click', () => {
+      // Clone the timeline and inject it into the modal
+      modalContentArea.innerHTML = `
+            <h3 class="text-lg font-extrabold text-stone-900 dark:text-stone-50 mb-2">${recipeTitleEl.textContent || 'Custom Recipe'}</h3>
+            <div class="relative border-l-2 border-amber-200 dark:border-amber-800/50 ml-2 mt-4 space-y-6 pb-2">
+                ${recipeStepsEl.innerHTML}
+            </div>
+        `;
+      recipePreviewModal.classList.remove('hidden');
+      setTimeout(() => {
+        recipePreviewModal.classList.remove('opacity-0');
+        recipePreviewModal.querySelector('div').classList.remove('scale-95');
+      }, 10);
+    });
+  }
+
+  if (closePreviewBtn) {
+    closePreviewBtn.addEventListener('click', () => {
+      recipePreviewModal.classList.add('opacity-0');
+      recipePreviewModal.querySelector('div').classList.add('scale-95');
+      setTimeout(() => {
+        recipePreviewModal.classList.add('hidden');
+      }, 300);
+    });
+  }
 }
 
 function applyConfigDefaults() {
@@ -270,7 +304,7 @@ function stageCurrentMethod() {
     label: methodLabel,
     ratio: parseFloat(ratioEl.value),
     result_type: customProfileEl.value || "Custom dialed profile.",
-    notes: customNotesEl.value || "", // Bundles notes with export!
+    notes: customNotesEl.value || "",
     steps: steps
   };
 
@@ -460,7 +494,6 @@ function calculateRecipe() {
     recipeTitleEl.textContent = customNameEl.value || 'Untitled Brew Method';
     recipeProfileEl.textContent = customProfileEl.value ? `Target: ${customProfileEl.value}` : '';
 
-    // Live update notes for custom editor
     if (customNotesEl.value) {
       recipeNotesEl.textContent = customNotesEl.value;
       recipeNotesEl.classList.remove('hidden');
@@ -492,7 +525,6 @@ function calculateRecipe() {
       recipeTitleEl.textContent = `${activeMethodData.label} Technique`;
       recipeProfileEl.textContent = activeMethodData.result_type ? `Target: ${activeMethodData.result_type}` : '';
 
-      // Update notes for preconfigured files
       if (activeMethodData.notes) {
         recipeNotesEl.textContent = activeMethodData.notes;
         recipeNotesEl.classList.remove('hidden');

@@ -9,13 +9,13 @@ const EMERGENCY_FALLBACK_DATA = [
     id: "james_hoffmann", name: "James Hoffmann", default_roast: "medium_light", default_process: "washed", default_dose: 15,
     methods: {
       v60: {
-        label: "Pour Over (V60)", ratio: 16.6, result_type: "Clean, sweet, and bright cup.", notes: "Use water just off the boil. Wait for the coffee bed to fully settle before enjoying.", steps: [
-          { time: "0:00", water: "{{chunk_1}}", text: "Pour for the bloom. Give the brewer a gentle swirl. Wait 45 seconds." },
-          { time: "0:45", water: "{{chunk_2}}", text: "Pour over 10 seconds. Pour in slow circles. Wait until 1:10." },
-          { time: "1:10", water: "{{chunk_3}}", text: "Pour over 10 seconds. Wait 10 seconds." },
-          { time: "1:30", water: "{{chunk_4}}", text: "Pour over 10 seconds. Wait 10 seconds." },
-          { time: "1:50", water: "{{water}}", text: "Pour over 10 seconds." },
-          { time: "2:00", water: "", text: "Give the brewer a final gentle swirl. Let it draw down." }
+        label: "Pour Over (V60)", ratio: 16.6, result_type: "Clean, sweet, and bright cup.", notes: "Based on the Ultimate 1-Cup V60 method. Use water just off the boil.", steps: [
+          { time: "0:00", water: "{{chunk_1}}", text: "Pour {{chunk_1}}g of water to bloom. Gently swirl from 0:10 - 0:15." },
+          { time: "0:45", water: "{{chunk_2}}", text: "Pour up to {{chunk_2}}g total over 15 seconds. Pause until 1:10." },
+          { time: "1:10", water: "{{chunk_3}}", text: "Pour up to {{chunk_3}}g total over 10 seconds. Pause until 1:30." },
+          { time: "1:30", water: "{{chunk_4}}", text: "Pour up to {{chunk_4}}g total over 10 seconds. Pause until 1:50." },
+          { time: "1:50", water: "{{water}}", text: "Pour up to {{water}}g total over 10 seconds." },
+          { time: "2:00", water: "", text: "Give the brewer a final gentle swirl and let it draw down." }
         ]
       }
     }

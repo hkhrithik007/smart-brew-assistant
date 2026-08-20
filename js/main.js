@@ -883,14 +883,24 @@ function handleQrUpload(e) {
   reader.onload = (evt) => {
     const img = new Image();
     img.onload = () => {
-      // Draw uploaded image to a canvas so jsQR can read its pixels
+      // Create canvas for scanning
       const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
-      ctx.drawImage(img, 0, 0);
 
+      // FIX: Scale down massive phone photos to prevent mobile browser memory crashes
+      const MAX_WIDTH = 800;
+      let scale = 1;
+      if (img.width > MAX_WIDTH) {
+        scale = MAX_WIDTH / img.width;
+      }
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+
+      // Draw the shrunk image
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+      // Decode the QR code
       const code = jsQR(imageData.data, imageData.width, imageData.height);
 
       if (code) {
@@ -915,7 +925,6 @@ function handleQrUpload(e) {
   e.target.value = '';
   importMenuDropdown.classList.add('hidden');
 }
-
 // ==========================================
 // Calculation & Steps Rendering
 // ==========================================

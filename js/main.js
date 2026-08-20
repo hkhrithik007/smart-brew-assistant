@@ -181,7 +181,6 @@ function getOptimalTemp(roast, process) {
   return Math.max(80, Math.min(100, temp));
 }
 
-// Added auto_drip to noTempMethods
 const noTempMethods = ['moka_pot', 'cold_brew', 'siphon', 'phin', 'auto_drip'];
 
 // ==========================================
@@ -250,7 +249,6 @@ function initSearchableDropdown(wrapperId, groups, defaultVal = null) {
     }
   }
 
-  // Clone node to safely remove old event listeners if initializing dynamically
   const newToggle = toggle.cloneNode(true);
   toggle.parentNode.replaceChild(newToggle, toggle);
   const newSearch = search.cloneNode(true);
@@ -432,7 +430,6 @@ function setupEventListeners() {
     calculateRecipe();
   });
 
-  // Custom dropdowns fire standard 'change' events from their hidden inputs
   methodEl.addEventListener('change', () => {
     applyConfigDefaults();
     calculateRecipe();
@@ -499,7 +496,6 @@ function applyConfigDefaults() {
       if (activeBarista.default_process) {
         fermentationEl.value = activeBarista.default_process;
 
-        // Force visual update on the custom dropdown text span
         const wrapper = document.getElementById('fermentation-wrapper');
         const textSpan = wrapper.querySelector('.selected-text');
         let foundLabel = activeBarista.default_process;
@@ -532,7 +528,6 @@ function updateMethodsDropdown() {
   if (selectedBarista && selectedBarista.methods) {
     methodBtn.disabled = false;
 
-    // Dynamically build the group list for the searchable dropdown based on what the config provides
     const dynamicMethods = [{
       group: "Available Recipes",
       items: Object.keys(selectedBarista.methods).map(k => ({
@@ -541,7 +536,6 @@ function updateMethodsDropdown() {
       }))
     }];
 
-    // Validate current selection, fallback to first option if invalid
     let currentVal = methodEl.value;
     if (!Object.keys(selectedBarista.methods).includes(currentVal)) {
       currentVal = Object.keys(selectedBarista.methods)[0];
@@ -558,7 +552,6 @@ function updateMethodsDropdown() {
 // ==========================================
 function stageCurrentMethod() {
   const methodId = customBrewMethodEl.value;
-  // Retrieve text from custom dropdown UI rather than native options
   const methodLabel = document.querySelector('#custom-brew-method-wrapper .selected-text').textContent;
 
   const steps = Array.from(document.querySelectorAll('.step-row')).map(row => {
@@ -715,6 +708,9 @@ function copyDirectLink() {
   });
 }
 
+// ------------------------------------------
+// FIXED: HTML5 Canvas Export for QR Card
+// ------------------------------------------
 function downloadBrandedQrCard() {
   if (!activeShareConfig) return;
 
@@ -769,8 +765,14 @@ function downloadBrandedQrCard() {
   ctx.roundRect(qrX, qrY, qrBoxSize, qrBoxSize, [24]);
   ctx.fill();
 
-  const qrImg = qrcodeTarget.querySelector('img') || qrcodeTarget.querySelector('canvas');
-  if (qrImg) {
+  // === THE QR CODE BUG FIX ===
+  // Prioritize grabbing the <canvas> element instead of the <img> tag
+  const qrCanvas = qrcodeTarget.querySelector('canvas');
+  const qrImg = qrcodeTarget.querySelector('img');
+
+  if (qrCanvas) {
+    ctx.drawImage(qrCanvas, qrX + 30, qrY + 30, qrBoxSize - 60, qrBoxSize - 60);
+  } else if (qrImg && qrImg.src) {
     ctx.drawImage(qrImg, qrX + 30, qrY + 30, qrBoxSize - 60, qrBoxSize - 60);
   }
 

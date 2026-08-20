@@ -6,6 +6,9 @@
     <title>Smart Brew Assistant</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+    <!-- Compression and QR Code Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script>
       tailwind.config = {
         darkMode: "class",
@@ -73,7 +76,7 @@
   <body
     class="bg-gradient-to-br from-stone-100 to-amber-50 dark:from-stone-950 dark:to-stone-900 min-h-screen font-sans text-stone-800 dark:text-stone-200 antialiased p-2 sm:p-4 md:p-8 flex flex-col items-center justify-center transition-colors duration-300 relative overflow-x-hidden"
   >
-    <!-- DARK MODE TOGGLE (Top Right) -->
+    <!-- DARK MODE TOGGLE -->
     <button
       id="theme-toggle"
       class="absolute top-4 right-4 md:top-8 md:right-8 p-3 rounded-full bg-white/80 dark:bg-stone-800/80 backdrop-blur-md shadow-sm border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-amber-500 hover:scale-105 transition-all z-50"
@@ -104,7 +107,7 @@
       </svg>
     </button>
 
-    <!-- HEADER WITH COFFEE MUG ICON -->
+    <!-- HEADER -->
     <div
       class="flex items-center gap-3 md:gap-4 mb-6 md:mb-8 drop-shadow-sm z-10 relative mt-12 md:mt-0"
     >
@@ -364,7 +367,6 @@
               </div>
             </div>
 
-            <!-- NEW GRINDER INPUT SECTION -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label
@@ -374,7 +376,7 @@
                 <input
                   type="text"
                   id="custom-grinder-name"
-                  placeholder="e.g., Comandante C40"
+                  placeholder="e.g., Timemore C2s"
                   class="w-full bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 py-2.5 px-3 rounded-lg focus:ring-2 focus:ring-amber-600 text-sm"
                 />
               </div>
@@ -383,11 +385,10 @@
                   class="block text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2"
                   >Grind Size</label
                 >
-                <!-- type="number" strictly enforces numerical input -->
                 <input
                   type="number"
                   id="custom-grinder-size"
-                  placeholder="e.g., 15"
+                  placeholder="e.g., 20"
                   class="w-full bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 py-2.5 px-3 rounded-lg focus:ring-2 focus:ring-amber-600 text-sm"
                 />
               </div>
@@ -420,7 +421,6 @@
             </div>
 
             <div>
-              <!-- PREVIEW BUTTON -->
               <div class="flex justify-between items-center mb-2">
                 <label
                   class="block text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider"
@@ -453,9 +453,7 @@
                 </button>
               </div>
 
-              <div id="custom-steps-container" class="space-y-3 mb-3">
-                <!-- JS injects rows here -->
-              </div>
+              <div id="custom-steps-container" class="space-y-3 mb-3"></div>
 
               <div class="flex flex-col sm:flex-row gap-2 mt-4">
                 <button
@@ -482,20 +480,19 @@
               >
                 Bundled in Config:
               </p>
-              <div id="staged-methods-list" class="flex flex-wrap gap-2">
-                <!-- JS injects badges here -->
-              </div>
+              <div id="staged-methods-list" class="flex flex-wrap gap-2"></div>
             </div>
 
+            <!-- ACTION BUTTONS (Export & Share QR) -->
             <div
-              class="pt-4 mt-4 border-t border-stone-200 dark:border-stone-700"
+              class="pt-4 mt-4 border-t border-stone-200 dark:border-stone-700 flex flex-col sm:flex-row gap-2"
             >
               <button
                 id="download-config-btn"
-                class="w-full py-3 bg-amber-600 hover:bg-amber-700 dark:bg-amber-700 dark:hover:bg-amber-600 text-white text-sm font-bold rounded-xl transition-all shadow-md flex justify-center items-center gap-2"
+                class="w-full sm:w-1/2 py-3 bg-stone-200 hover:bg-stone-300 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 text-xs font-bold rounded-xl transition-all shadow-sm flex justify-center items-center gap-1.5"
               >
                 <svg
-                  class="w-5 h-5"
+                  class="w-4 h-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -507,7 +504,26 @@
                     d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
                   ></path>
                 </svg>
-                Export Complete Config
+                Export .yaml
+              </button>
+              <button
+                id="share-qr-btn"
+                class="w-full sm:w-1/2 py-3 bg-amber-600 hover:bg-amber-700 dark:bg-amber-700 dark:hover:bg-amber-600 text-white text-xs font-bold rounded-xl transition-all shadow-md flex justify-center items-center gap-1.5"
+              >
+                <svg
+                  class="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+                  ></path>
+                </svg>
+                Share / Save QR
               </button>
             </div>
           </div>
@@ -518,11 +534,34 @@
       <div
         class="w-full md:w-7/12 p-5 sm:p-6 lg:p-12 h-auto md:h-[80vh] overflow-y-auto transition-colors duration-300"
       >
-        <h2
-          class="text-xl md:text-2xl font-extrabold text-stone-900 dark:text-stone-50 tracking-tight mb-5 md:mb-6"
-        >
-          Extraction Profile
-        </h2>
+        <div class="flex justify-between items-center mb-5 md:mb-6">
+          <h2
+            class="text-xl md:text-2xl font-extrabold text-stone-900 dark:text-stone-50 tracking-tight"
+          >
+            Extraction Profile
+          </h2>
+          <!-- Right Panel Quick Share Button -->
+          <button
+            id="quick-share-qr-btn"
+            class="p-2 text-stone-500 hover:text-amber-700 dark:hover:text-amber-400 bg-stone-100 dark:bg-stone-800 rounded-lg transition-colors border border-stone-200 dark:border-stone-700 flex items-center gap-1 text-xs font-bold"
+            title="Share current recipe as QR"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+              ></path>
+            </svg>
+            <span class="hidden sm:inline">Share QR</span>
+          </button>
+        </div>
 
         <div
           id="metrics-container"
@@ -575,7 +614,6 @@
             Awaiting Configuration...
           </h3>
 
-          <!-- NEW GRINDER INFO BADGE (Outputs here) -->
           <div
             id="recipe-grinder-badge"
             class="hidden mt-2 mb-1 flex items-center gap-1.5 px-2.5 py-1 w-max bg-stone-100 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700 rounded-md text-[11px] font-bold text-stone-600 dark:text-stone-300"
@@ -615,9 +653,7 @@
           <div
             id="recipe-steps"
             class="relative border-l-2 border-amber-200 dark:border-amber-800/50 ml-2 md:ml-3 mt-6 space-y-6 md:space-y-7 pb-4"
-          >
-            <!-- Steps injected via JS -->
-          </div>
+          ></div>
         </div>
       </div>
     </div>
@@ -702,8 +738,103 @@
             </svg>
           </button>
         </div>
-        <div class="p-6 overflow-y-auto" id="modal-content-area">
-          <!-- Cloned recipe steps go here via JS -->
+        <div class="p-6 overflow-y-auto" id="modal-content-area"></div>
+      </div>
+    </div>
+
+    <!-- QR SHARE & DOWNLOAD MODAL -->
+    <div
+      id="qr-modal"
+      class="hidden fixed inset-0 z-[110] bg-stone-900/80 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 transition-opacity duration-300"
+    >
+      <div
+        class="bg-white dark:bg-stone-900 w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden flex flex-col p-6 items-center text-center border border-stone-100 dark:border-stone-800 transform scale-95 transition-transform duration-300"
+      >
+        <div class="w-full flex justify-between items-center mb-4">
+          <span
+            class="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-500"
+            >Scan & Brew</span
+          >
+          <button
+            id="close-qr-modal-btn"
+            class="text-stone-400 hover:text-red-500 p-1"
+          >
+            <svg
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
+            </svg>
+          </button>
+        </div>
+
+        <h3
+          id="qr-modal-title"
+          class="text-lg font-black text-stone-900 dark:text-stone-50 mb-1"
+        >
+          Morning Brew
+        </h3>
+        <p
+          id="qr-modal-subtitle"
+          class="text-xs text-stone-500 dark:text-stone-400 mb-5"
+        ></p>
+
+        <!-- QR Render Box -->
+        <div
+          class="p-4 bg-white rounded-2xl shadow-inner border border-stone-200 mb-5 flex items-center justify-center"
+        >
+          <div id="qrcode-target"></div>
+        </div>
+
+        <!-- Hidden Canvas used for Card Generation -->
+        <canvas id="qr-export-canvas" class="hidden"></canvas>
+
+        <div class="w-full space-y-2">
+          <button
+            id="download-qr-card-btn"
+            class="w-full py-3 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl transition-all shadow-md flex justify-center items-center gap-2"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+              ></path>
+            </svg>
+            Download QR Card (PNG)
+          </button>
+          <button
+            id="copy-qr-link-btn"
+            class="w-full py-2.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 text-xs font-bold rounded-xl transition-all flex justify-center items-center gap-1.5"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
+              ></path>
+            </svg>
+            <span id="copy-btn-text">Copy Direct Link</span>
+          </button>
         </div>
       </div>
     </div>

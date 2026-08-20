@@ -75,6 +75,8 @@ const EMERGENCY_FALLBACK_DATA = [
 
 let allBaristas = [];
 let stagedCustomMethods = {};
+let activeShareUrl = '';
+let activeShareConfig = null;
 
 // ==========================================
 // DOM Elements
@@ -105,8 +107,8 @@ const customNameEl = document.getElementById('custom-name');
 const customBrewMethodEl = document.getElementById('custom-brew-method');
 const customProfileEl = document.getElementById('custom-profile');
 const customNotesEl = document.getElementById('custom-notes');
-const customGrinderNameEl = document.getElementById('custom-grinder-name'); // NEW
-const customGrinderSizeEl = document.getElementById('custom-grinder-size'); // NEW
+const customGrinderNameEl = document.getElementById('custom-grinder-name');
+const customGrinderSizeEl = document.getElementById('custom-grinder-size');
 const customStepsContainer = document.getElementById('custom-steps-container');
 const addStepBtn = document.getElementById('add-step-btn');
 const stageMethodBtn = document.getElementById('stage-method-btn');
@@ -115,23 +117,36 @@ const loadConfigFile = document.getElementById('load-config-file');
 const stagedMethodsContainer = document.getElementById('staged-methods-container');
 const stagedMethodsList = document.getElementById('staged-methods-list');
 
-// Grinder Display Elements
-const recipeGrinderBadgeEl = document.getElementById('recipe-grinder-badge'); // NEW
-const recipeGrinderTextEl = document.getElementById('recipe-grinder-text'); // NEW
+// Grinder Badge
+const recipeGrinderBadgeEl = document.getElementById('recipe-grinder-badge');
+const recipeGrinderTextEl = document.getElementById('recipe-grinder-text');
 
-// Dark Mode Toggle
+// Theme Toggle
 const themeToggleBtn = document.getElementById('theme-toggle');
 const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
 const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
 
-// Preview Modal Elements
+// Preview Modal
 const previewTimelineBtn = document.getElementById('preview-timeline-btn');
 const recipePreviewModal = document.getElementById('recipe-preview-modal');
 const closePreviewBtn = document.getElementById('close-preview-btn');
 const modalContentArea = document.getElementById('modal-content-area');
 
+// QR Modal Elements
+const shareQrBtn = document.getElementById('share-qr-btn');
+const quickShareQrBtn = document.getElementById('quick-share-qr-btn');
+const qrModal = document.getElementById('qr-modal');
+const closeQrModalBtn = document.getElementById('close-qr-modal-btn');
+const qrModalTitle = document.getElementById('qr-modal-title');
+const qrModalSubtitle = document.getElementById('qr-modal-subtitle');
+const qrcodeTarget = document.getElementById('qrcode-target');
+const downloadQrCardBtn = document.getElementById('download-qr-card-btn');
+const copyQrLinkBtn = document.getElementById('copy-qr-link-btn');
+const copyBtnText = document.getElementById('copy-btn-text');
+const qrExportCanvas = document.getElementById('qr-export-canvas');
+
 // ==========================================
-// Dynamic Temperature Logic
+// Temperature Logic
 // ==========================================
 const baseRoastTemps = {
   'very_light': 97, 'light': 95, 'medium_light': 93, 'medium': 91, 'medium_dark': 89, 'dark': 86, 'very_dark': 82
@@ -158,6 +173,7 @@ async function initializeApp() {
     let yamlFilesToFetch = [];
     let loadSuccess = false;
 
+    // TIER 1: Check Local index
     try {
       const indexResponse = await fetch(LOCAL_INDEX_URL);
       if (indexResponse.ok) {
@@ -167,6 +183,7 @@ async function initializeApp() {
       }
     } catch (e) { console.log("Local index not found, falling back to GitHub API..."); }
 
+    // TIER 2: Live GitHub API
     if (!loadSuccess) {
       try {
         const response = await fetch(GITHUB_API_URL);
@@ -178,6 +195,7 @@ async function initializeApp() {
       } catch (e) { console.log("GitHub API failed."); }
     }
 
+    // TIER 3: Parallel YAML Fetching
     if (loadSuccess && yamlFilesToFetch.length > 0) {
       await Promise.all(yamlFilesToFetch.map(async (url) => {
         try {
@@ -191,10 +209,13 @@ async function initializeApp() {
       }));
     }
 
+    // TIER 4: Fallback
     if (allBaristas.length === 0) {
-      console.warn("Using Emergency Hardcoded Fallback.");
       allBaristas = [...EMERGENCY_FALLBACK_DATA];
     }
+
+    // CHECK FOR URL QR PAYLOAD (?r=...)
+    checkUrlForSharedRecipe();
 
     renderBaristaDropdown();
     setupEventListeners();
@@ -210,7 +231,38 @@ async function initializeApp() {
 }
 
 // ==========================================
-// Dark Mode Logic
+// URL Shared Recipe Importer
+// ==========================================
+function checkUrlForSharedRecipe() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const compressedData = urlParams.get('r');
+
+  if (compressedData) {
+    try {
+      const jsonString = LZString.decompressFromEncodedURIComponent(compressedData);
+      if (jsonString) {
+        const sharedConfig = JSON.parse(jsonString);
+        if (sharedConfig && sharedConfig.id && sharedConfig.methods) {
+          const existingIdx = allBaristas.findIndex(b => b.id === sharedConfig.id);
+          if (existingIdx > -1) allBaristas[existingIdx] = sharedConfig;
+          else allBaristas.unshift(sharedConfig); // Place shared recipe at top
+
+          setTimeout(() => {
+            baristaEl.value = sharedConfig.id;
+            updateMethodsDropdown();
+            applyConfigDefaults();
+            calculateRecipe();
+          }, 100);
+        }
+      }
+    } catch (e) {
+      console.warn("Could not unpack QR recipe from URL", e);
+    }
+  }
+}
+
+// ==========================================
+// Dark Mode
 // ==========================================
 function setupDarkMode() {
   if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -268,8 +320,6 @@ function setupEventListeners() {
   customBrewMethodEl.addEventListener('change', calculateRecipe);
   customProfileEl.addEventListener('input', calculateRecipe);
   customNotesEl.addEventListener('input', calculateRecipe);
-
-  // NEW: Add event listeners for the grinder inputs
   customGrinderNameEl.addEventListener('input', calculateRecipe);
   customGrinderSizeEl.addEventListener('input', calculateRecipe);
 
@@ -278,7 +328,14 @@ function setupEventListeners() {
   downloadConfigBtn.addEventListener('click', downloadCustomConfig);
   loadConfigFile.addEventListener('change', handleFileUpload);
 
-  // Modal Listeners
+  // QR Modal Triggers
+  shareQrBtn.addEventListener('click', () => triggerQrModal(true));
+  quickShareQrBtn.addEventListener('click', () => triggerQrModal(false));
+  closeQrModalBtn.addEventListener('click', hideQrModal);
+  downloadQrCardBtn.addEventListener('click', downloadBrandedQrCard);
+  copyQrLinkBtn.addEventListener('click', copyDirectLink);
+
+  // Timeline Preview Modal
   if (previewTimelineBtn) {
     previewTimelineBtn.addEventListener('click', () => {
       modalContentArea.innerHTML = `
@@ -340,7 +397,7 @@ function updateMethodsDropdown() {
 }
 
 // ==========================================
-// Staging System (Building the Multi-Method Config)
+// Staging System
 // ==========================================
 function stageCurrentMethod() {
   const methodId = customBrewMethodEl.value;
@@ -356,7 +413,6 @@ function stageCurrentMethod() {
     };
   });
 
-  // Now successfully injecting the grinder parameters into the YAML config
   stagedCustomMethods[methodId] = {
     label: methodLabel,
     ratio: parseFloat(ratioEl.value),
@@ -370,7 +426,7 @@ function stageCurrentMethod() {
   renderStagedMethods();
   customProfileEl.value = '';
   customNotesEl.value = '';
-  customGrinderNameEl.value = ''; // Clean up grinder fields after save
+  customGrinderNameEl.value = '';
   customGrinderSizeEl.value = '';
   customStepsContainer.innerHTML = '';
   addCustomStepRow();
@@ -397,9 +453,6 @@ window.removeStagedMethod = function (id) {
   renderStagedMethods();
 }
 
-// ==========================================
-// Custom Step Row Generator
-// ==========================================
 function addCustomStepRow() {
   const div = document.createElement('div');
   div.className = 'flex flex-col gap-2 step-row bg-white dark:bg-stone-800 p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm';
@@ -435,7 +488,168 @@ function addCustomStepRow() {
 }
 
 // ==========================================
-// File I/O (Download & Load YAML)
+// QR Code & Card Generation Logic
+// ==========================================
+function triggerQrModal(fromCustomBuilder = false) {
+  let configToShare = null;
+
+  if (fromCustomBuilder || baristaEl.value === 'custom') {
+    const configName = customNameEl.value || 'Custom Coffee Brew';
+    const hasUnsavedSteps = document.querySelectorAll('.step-row').length > 0 && document.querySelector('.custom-step-text').value !== '';
+    if (Object.keys(stagedCustomMethods).length === 0 || hasUnsavedSteps) {
+      stageCurrentMethod();
+    }
+
+    configToShare = {
+      id: configName.toLowerCase().replace(/[^a-z0-9]/g, '_'),
+      name: configName,
+      default_roast: roastEl.value,
+      default_process: fermentationEl.value,
+      default_dose: parseFloat(weightEl.value),
+      methods: stagedCustomMethods
+    };
+  } else {
+    configToShare = allBaristas.find(b => b.id === baristaEl.value);
+  }
+
+  if (!configToShare) return;
+  activeShareConfig = configToShare;
+
+  // Compress into URL
+  const jsonStr = JSON.stringify(configToShare);
+  const compressed = LZString.compressToEncodedURIComponent(jsonStr);
+  const baseUrl = window.location.origin + window.location.pathname;
+  activeShareUrl = `${baseUrl}?r=${compressed}`;
+
+  // Update modal text
+  qrModalTitle.textContent = configToShare.name;
+  const firstMethodKey = Object.keys(configToShare.methods)[0];
+  const methodData = configToShare.methods[firstMethodKey];
+  qrModalSubtitle.textContent = methodData ? `${methodData.label} • Ratio 1:${methodData.ratio}` : 'Ready to Brew';
+
+  // Render QR Code inside target container
+  qrcodeTarget.innerHTML = '';
+  new QRCode(qrcodeTarget, {
+    text: activeShareUrl,
+    width: 180,
+    height: 180,
+    colorDark: "#1c1917",
+    colorLight: "#ffffff",
+    correctLevel: QRCode.CorrectLevel.M
+  });
+
+  // Show modal
+  qrModal.classList.remove('hidden');
+  setTimeout(() => {
+    qrModal.classList.remove('opacity-0');
+    qrModal.querySelector('div').classList.remove('scale-95');
+  }, 10);
+}
+
+function hideQrModal() {
+  qrModal.classList.add('opacity-0');
+  qrModal.querySelector('div').classList.add('scale-95');
+  setTimeout(() => {
+    qrModal.classList.add('hidden');
+  }, 300);
+}
+
+function copyDirectLink() {
+  navigator.clipboard.writeText(activeShareUrl).then(() => {
+    copyBtnText.textContent = "✓ Link Copied!";
+    setTimeout(() => { copyBtnText.textContent = "Copy Direct Link"; }, 2000);
+  });
+}
+
+// Download Branded Canvas Card (smart-brew-assistant.png)
+function downloadBrandedQrCard() {
+  if (!activeShareConfig) return;
+
+  const canvas = qrExportCanvas;
+  const ctx = canvas.getContext('2d');
+
+  canvas.width = 800;
+  canvas.height = 1050;
+
+  // Background gradient
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  bgGrad.addColorStop(0, '#1c1917'); // stone-900
+  bgGrad.addColorStop(1, '#0c0a09'); // stone-950
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Outer Accent Border
+  ctx.strokeStyle = '#d97706'; // amber-600
+  ctx.lineWidth = 8;
+  ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
+
+  // App Title Header
+  ctx.fillStyle = '#f59e0b';
+  ctx.font = 'bold 30px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('SMART BREW ASSISTANT', canvas.width / 2, 90);
+
+  // Divider Line
+  ctx.strokeStyle = '#292524';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(80, 120);
+  ctx.lineTo(canvas.width - 80, 120);
+  ctx.stroke();
+
+  // Recipe Name
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 44px sans-serif';
+  ctx.fillText(activeShareConfig.name, canvas.width / 2, 190);
+
+  // Method & Grinder Subtitle
+  const firstMethodKey = Object.keys(activeShareConfig.methods)[0];
+  const methodData = activeShareConfig.methods[firstMethodKey];
+  const methodLabel = methodData?.label || 'Custom Brew';
+  const grinderInfo = methodData?.grinder_name ? `${methodData.grinder_name} (Size: ${methodData.grind_size || 'Dialed'})` : 'Dialed Precision';
+
+  ctx.fillStyle = '#a8a29e';
+  ctx.font = '24px sans-serif';
+  ctx.fillText(`${methodLabel} • 1:${methodData?.ratio || 16}`, canvas.width / 2, 240);
+  ctx.fillText(`Grinder: ${grinderInfo}`, canvas.width / 2, 280);
+
+  // QR Code Image Holder Card
+  const qrBoxSize = 420;
+  const qrX = (canvas.width - qrBoxSize) / 2;
+  const qrY = 330;
+
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.roundRect(qrX, qrY, qrBoxSize, qrBoxSize, [24]);
+  ctx.fill();
+
+  // Grab rendered QR code from the DOM
+  const qrImg = qrcodeTarget.querySelector('img') || qrcodeTarget.querySelector('canvas');
+  if (qrImg) {
+    ctx.drawImage(qrImg, qrX + 30, qrY + 30, qrBoxSize - 60, qrBoxSize - 60);
+  }
+
+  // Scan instruction
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 24px sans-serif';
+  ctx.fillText('Scan with Camera to Brew Live', canvas.width / 2, 820);
+
+  // Bottom Trademark & Author
+  ctx.fillStyle = '#78716c';
+  ctx.font = 'bold 20px sans-serif';
+  ctx.fillText('© 2026 Smart Brew Assistant™ • Crafted by Hritik Sharma', canvas.width / 2, 940);
+  ctx.font = '16px sans-serif';
+  ctx.fillText('https://hkhrithik007.github.io/smart-brew-assistant/', canvas.width / 2, 975);
+
+  // Download Trigger
+  const link = document.createElement('a');
+  link.download = `smart-brew-assistant-${activeShareConfig.id || 'recipe'}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+// ==========================================
+// File I/O
 // ==========================================
 function downloadCustomConfig() {
   const configName = customNameEl.value || 'My Custom Config';
@@ -490,7 +704,7 @@ function handleFileUpload(e) {
 }
 
 // ==========================================
-// Core Calculation & Rendering
+// Calculation & Steps Rendering
 // ==========================================
 function buildTimelineStep(time, water, instruction) {
   const waterBadge = water ? `<span class="ml-2 text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/50 border border-amber-200 dark:border-amber-700/50 px-2 py-0.5 rounded-full">${water}g</span>` : '';
@@ -555,7 +769,6 @@ function calculateRecipe() {
     recipeTitleEl.textContent = customNameEl.value || 'Untitled Brew Method';
     recipeProfileEl.textContent = customProfileEl.value ? `Target: ${customProfileEl.value}` : '';
 
-    // Live update for Grinder Data Badge
     if (customGrinderNameEl.value || customGrinderSizeEl.value) {
       const gName = customGrinderNameEl.value || "Custom Grinder";
       const gSize = customGrinderSizeEl.value ? ` (Size: ${customGrinderSizeEl.value})` : "";
@@ -596,7 +809,6 @@ function calculateRecipe() {
       recipeTitleEl.textContent = `${activeMethodData.label} Technique`;
       recipeProfileEl.textContent = activeMethodData.result_type ? `Target: ${activeMethodData.result_type}` : '';
 
-      // Load Grinder Data Badge if it exists in the preset file
       if (activeMethodData.grinder_name || activeMethodData.grind_size) {
         const gName = activeMethodData.grinder_name || "Grinder";
         const gSize = activeMethodData.grind_size ? ` (Size: ${activeMethodData.grind_size})` : "";

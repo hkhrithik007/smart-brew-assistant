@@ -8,6 +8,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- NEW: JS QR Scanner Library -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <script>
       tailwind.config = {
         darkMode: "class",
@@ -178,33 +180,84 @@
             </h2>
           </div>
 
-          <label
-            class="cursor-pointer bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 shadow-sm text-stone-600 dark:text-stone-300 hover:text-amber-700 dark:hover:text-amber-400 hover:border-amber-300 dark:hover:border-amber-600 text-xs font-bold py-2 px-3 rounded-lg transition-all flex items-center gap-1 shrink-0"
-          >
-            <svg
-              class="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <!-- NEW: IMPORT DROPDOWN MENU -->
+          <div class="relative">
+            <button
+              id="import-menu-btn"
+              class="cursor-pointer bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 shadow-sm text-stone-600 dark:text-stone-300 hover:text-amber-700 dark:hover:text-amber-400 hover:border-amber-300 dark:hover:border-amber-600 text-xs font-bold py-2 px-3 rounded-lg transition-all flex items-center gap-1 shrink-0"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-              ></path>
-            </svg>
-            <span class="hidden sm:inline">Load .yaml</span>
-            <input
-              type="file"
-              id="load-config-file"
-              accept=".yaml,.yml"
-              class="hidden"
-            />
-          </label>
+              <svg
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                ></path>
+              </svg>
+              <span class="hidden sm:inline">Import</span>
+            </button>
+
+            <div
+              id="import-menu-dropdown"
+              class="absolute right-0 mt-2 w-48 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl shadow-2xl hidden flex-col z-[70] overflow-hidden"
+            >
+              <label
+                class="cursor-pointer px-4 py-3 text-sm font-bold text-stone-700 dark:text-stone-200 hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors border-b border-stone-100 dark:border-stone-700 flex items-center gap-2"
+              >
+                <svg
+                  class="w-4 h-4 text-amber-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  ></path>
+                </svg>
+                Load .YAML
+                <input
+                  type="file"
+                  id="load-config-file"
+                  accept=".yaml,.yml"
+                  class="hidden"
+                />
+              </label>
+              <label
+                class="cursor-pointer px-4 py-3 text-sm font-bold text-stone-700 dark:text-stone-200 hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-2"
+              >
+                <svg
+                  class="w-4 h-4 text-teal-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+                  ></path>
+                </svg>
+                Scan QR Code
+                <input
+                  type="file"
+                  id="load-qr-file"
+                  accept="image/*"
+                  class="hidden"
+                />
+              </label>
+            </div>
+          </div>
         </div>
 
-        <!-- NEW: Beautiful 2-Way Navigation Toggle -->
         <div
           class="flex bg-stone-200/60 dark:bg-stone-800/60 p-1 rounded-xl mb-6 border border-stone-300/50 dark:border-stone-700/50 shadow-inner"
         >
@@ -286,7 +339,6 @@
             </div>
           </div>
 
-          <!-- UNIVERSAL CONTROLS -->
           <div id="universal-controls" class="space-y-4 md:space-y-5">
             <div class="grid grid-cols-2 gap-3 md:gap-4">
               <div>
@@ -404,7 +456,6 @@
             </div>
           </div>
 
-          <!-- CUSTOM BUILDER UI -->
           <div
             id="custom-builder"
             class="hidden mt-2 pt-2 space-y-4 md:space-y-5 border-t border-stone-200 dark:border-stone-700"

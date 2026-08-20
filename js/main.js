@@ -87,7 +87,7 @@ const EMERGENCY_FALLBACK_DATA = [
           { time: "0:15", water: "", text: "Fill the basket to the top with coffee (do not tamp or compress). Assemble the pot using a towel to protect your hands." },
           { time: "0:30", water: "", text: "Place on the stove over medium heat. Leave the lid open so you can keep an eye on the brew." },
           { time: "2:00", water: "", text: "As soon as coffee starts to bubble up into the top chamber, reduce the stove to low heat." },
-          { time: "3:00", water: "", text: "When hear the coffee sputtering, close the lid and remove the pot entirely from the heat. Pour immediately." }
+          { time: "3:00", water: "", text: "When you hear the coffee sputtering, close the lid and remove the pot entirely from the heat. Pour immediately." }
         ]
       }
     }
@@ -134,10 +134,15 @@ const customStepsContainer = document.getElementById('custom-steps-container');
 const addStepBtn = document.getElementById('add-step-btn');
 const stageMethodBtn = document.getElementById('stage-method-btn');
 const downloadConfigBtn = document.getElementById('download-config-btn');
-const loadConfigFile = document.getElementById('load-config-file');
 const stagedMethodsContainer = document.getElementById('staged-methods-container');
 const stagedMethodsList = document.getElementById('staged-methods-list');
 const baristaContainer = document.getElementById('barista-container');
+
+// Load Menus
+const importMenuBtn = document.getElementById('import-menu-btn');
+const importMenuDropdown = document.getElementById('import-menu-dropdown');
+const loadConfigFile = document.getElementById('load-config-file');
+const loadQrFile = document.getElementById('load-qr-file');
 
 // Mode Toggle Elements
 const modeOfficialBtn = document.getElementById('mode-official');
@@ -188,7 +193,7 @@ function getOptimalTemp(roast, process) {
 const noTempMethods = ['moka_pot', 'cold_brew', 'siphon', 'phin', 'auto_drip'];
 
 // ==========================================
-// MODE TOGGLER (Library System)
+// MODE TOGGLER & DROPDOWN INIT
 // ==========================================
 function setMode(mode) {
   currentMode = mode;
@@ -203,7 +208,7 @@ function setMode(mode) {
     methodContainer.classList.remove('hidden');
     customBuilder.classList.add('hidden');
 
-    renderBaristaDropdown(baristaEl.value);
+    renderBaristaDropdown(null);
 
   } else if (mode === 'create') {
     modeCreateBtn.className = "flex-1 py-2 text-[10px] md:text-xs font-bold rounded-lg bg-white dark:bg-stone-700 shadow-sm text-teal-700 dark:text-teal-400 transition-all";
@@ -216,13 +221,27 @@ function setMode(mode) {
   calculateRecipe();
 }
 
-// ==========================================
-// CUSTOM SEARCHABLE UI INITIALIZER
-// ==========================================
+function renderBaristaDropdown(selectedId = null) {
+  baristaEl.innerHTML = allBaristas.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+  baristaEl.disabled = false;
+  baristaEl.classList.remove("bg-stone-100", "dark:bg-stone-800");
+  baristaEl.classList.add("bg-white", "dark:bg-stone-900");
+
+  // Explicitly force James Hoffmann if selectedId is null, otherwise fallbacks
+  if (selectedId && allBaristas.some(b => b.id === selectedId)) {
+    baristaEl.value = selectedId;
+  } else if (allBaristas.some(b => b.id === 'james_hoffmann')) {
+    baristaEl.value = 'james_hoffmann';
+  } else if (allBaristas.length > 0) {
+    baristaEl.value = allBaristas[0].id;
+  }
+
+  updateMethodsDropdown();
+}
+
 function initSearchableDropdown(wrapperId, groups, defaultVal = null) {
   const wrapper = document.getElementById(wrapperId);
   if (!wrapper) return;
-
   const toggle = wrapper.querySelector('.dropdown-toggle');
   const menu = wrapper.querySelector('.dropdown-menu');
   const search = wrapper.querySelector('.search-input');
@@ -302,6 +321,8 @@ document.addEventListener('click', (e) => {
 async function initializeApp() {
   setupDarkMode();
 
+  allBaristas = [...EMERGENCY_FALLBACK_DATA];
+
   try {
     let yamlFilesToFetch = [];
     let loadSuccess = false;
@@ -313,7 +334,7 @@ async function initializeApp() {
         yamlFilesToFetch = localFiles.map(fileName => `../barista/${fileName}`);
         loadSuccess = true;
       }
-    } catch (e) { console.log("Local index not found, falling back to GitHub API..."); }
+    } catch (e) { /* Offline */ }
 
     if (!loadSuccess) {
       try {
@@ -323,71 +344,75 @@ async function initializeApp() {
           yamlFilesToFetch = files.filter(f => f.name.endsWith('.yaml') || f.name.endsWith('.yml')).map(f => f.download_url);
           loadSuccess = true;
         }
-      } catch (e) { console.log("GitHub API failed."); }
+      } catch (e) { /* Offline */ }
     }
 
     if (loadSuccess && yamlFilesToFetch.length > 0) {
+      let liveBaristas = [];
       await Promise.all(yamlFilesToFetch.map(async (url) => {
         try {
           const cacheBusterUrl = url.includes('github') ? url : url + '?t=' + new Date().getTime();
           const fileRes = await fetch(cacheBusterUrl);
           if (fileRes.ok) {
             const config = jsyaml.load(await fileRes.text());
-            if (config && config.id) allBaristas.push(config);
+            if (config && config.id) liveBaristas.push(config);
           }
-        } catch (err) { console.warn(`Skipped YAML`, err); }
+        } catch (err) { /* Skip */ }
       }));
+
+      if (liveBaristas.length > 0) {
+        allBaristas = liveBaristas;
+      }
     }
-
-    if (allBaristas.length === 0) allBaristas = [...EMERGENCY_FALLBACK_DATA];
-
-    initSearchableDropdown('fermentation-wrapper', FERMENTATION_PROCESSES, 'washed');
-    initSearchableDropdown('custom-brew-method-wrapper', CUSTOM_BREW_METHODS, 'v60');
-
-    setupEventListeners();
-    addCustomStepRow();
-    checkUrlForSharedRecipe();
-
-    if (window.location.search.indexOf('r=') === -1) {
-      setMode('official');
-    }
-
   } catch (error) {
-    console.error(error);
-    creatorBadgeEl.textContent = "Setup Required";
-    baristaEl.innerHTML = '<option disabled selected>No configurations found</option>';
+    console.warn("Using offline fallback data.");
+  }
+
+  initSearchableDropdown('fermentation-wrapper', FERMENTATION_PROCESSES, 'washed');
+  initSearchableDropdown('custom-brew-method-wrapper', CUSTOM_BREW_METHODS, 'v60');
+
+  setupEventListeners();
+  addCustomStepRow();
+
+  if (window.location.search.indexOf('r=') === -1) {
+    setMode('official');
+  } else {
+    checkUrlForSharedRecipe();
   }
 }
 
 // ==========================================
-// URL Shared Recipe Importer (QR Scans)
+// UNPACK PAYLOAD (URL or QR Image)
 // ==========================================
+function processSharedRecipePayload(compressedData) {
+  try {
+    const jsonString = LZString.decompressFromEncodedURIComponent(compressedData);
+    if (jsonString) {
+      const sharedConfig = JSON.parse(jsonString);
+      if (sharedConfig && sharedConfig.id && sharedConfig.methods) {
+        const existingIdx = allBaristas.findIndex(b => b.id === sharedConfig.id);
+        if (existingIdx > -1) allBaristas[existingIdx] = sharedConfig;
+        else allBaristas.unshift(sharedConfig);
+
+        setMode('official');
+        renderBaristaDropdown(sharedConfig.id);
+        applyConfigDefaults();
+        calculateRecipe();
+        return true;
+      }
+    }
+  } catch (e) {
+    console.warn("Could not unpack QR recipe", e);
+  }
+  return false;
+}
+
 function checkUrlForSharedRecipe() {
   const urlParams = new URLSearchParams(window.location.search);
   const compressedData = urlParams.get('r');
-
   if (compressedData) {
-    try {
-      const jsonString = LZString.decompressFromEncodedURIComponent(compressedData);
-      if (jsonString) {
-        const sharedConfig = JSON.parse(jsonString);
-        if (sharedConfig && sharedConfig.id && sharedConfig.methods) {
-          const existingIdx = allBaristas.findIndex(b => b.id === sharedConfig.id);
-          if (existingIdx > -1) allBaristas[existingIdx] = sharedConfig;
-          else allBaristas.unshift(sharedConfig);
-
-          setTimeout(() => {
-            setMode('official');
-            baristaEl.value = sharedConfig.id;
-            updateMethodsDropdown();
-            applyConfigDefaults();
-            calculateRecipe();
-            window.history.replaceState({}, document.title, window.location.pathname);
-          }, 100);
-        }
-      }
-    } catch (e) {
-      console.warn("Could not unpack QR recipe from URL", e);
+    if (processSharedRecipePayload(compressedData)) {
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
   }
 }
@@ -414,24 +439,6 @@ function setupDarkMode() {
       localStorage.setItem('color-theme', 'dark');
     }
   });
-}
-
-function renderBaristaDropdown(selectedId = null) {
-  baristaEl.innerHTML = allBaristas.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
-  baristaEl.disabled = false;
-  baristaEl.classList.remove("bg-stone-100", "dark:bg-stone-800");
-  baristaEl.classList.add("bg-white", "dark:bg-stone-900");
-
-  // Prioritize James Hoffmann as the default on launch, or fallback to the requested/first ID
-  if (selectedId && allBaristas.some(b => b.id === selectedId)) {
-    baristaEl.value = selectedId;
-  } else if (allBaristas.some(b => b.id === 'james_hoffmann')) {
-    baristaEl.value = 'james_hoffmann';
-  } else if (allBaristas.length > 0) {
-    baristaEl.value = allBaristas[0].id;
-  }
-
-  updateMethodsDropdown();
 }
 
 function setupEventListeners() {
@@ -479,7 +486,19 @@ function setupEventListeners() {
   addStepBtn.addEventListener('click', () => { addCustomStepRow(); calculateRecipe(); });
   stageMethodBtn.addEventListener('click', stageCurrentMethod);
   downloadConfigBtn.addEventListener('click', downloadCustomConfig);
+
+  // IMPORT MENU LISTENERS
+  importMenuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    importMenuDropdown.classList.toggle('hidden');
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#import-menu-dropdown') && !e.target.closest('#import-menu-btn')) {
+      importMenuDropdown.classList.add('hidden');
+    }
+  });
   loadConfigFile.addEventListener('change', handleFileUpload);
+  loadQrFile.addEventListener('change', handleQrUpload);
 
   shareQrBtn.addEventListener('click', () => triggerQrModal(true));
   quickShareQrBtn.addEventListener('click', () => triggerQrModal(false));
@@ -649,30 +668,13 @@ function addCustomStepRow(m = "0", s = "00", waterStr = "", textStr = "") {
   const minInput = div.querySelector('.custom-step-min');
   const secInput = div.querySelector('.custom-step-sec');
 
-  // --- NEW SMART FOCUS UX --- //
-
-  // Auto-clear minute input if it's "0" when clicked
-  minInput.addEventListener('focus', (e) => {
-    if (e.target.value === '0') e.target.value = '';
-    e.target.select();
-  });
-  // Put the "0" back if they leave it completely blank
-  minInput.addEventListener('blur', (e) => {
-    if (e.target.value === '') e.target.value = '0';
-  });
-
-  // Auto-clear second input if it's "00" when clicked
-  secInput.addEventListener('focus', (e) => {
-    if (e.target.value === '00' || e.target.value === '0') e.target.value = '';
-    e.target.select();
-  });
-  // Pad the seconds with a zero if needed when clicking away
+  minInput.addEventListener('focus', (e) => { if (e.target.value === '0') e.target.value = ''; e.target.select(); });
+  minInput.addEventListener('blur', (e) => { if (e.target.value === '') e.target.value = '0'; });
+  secInput.addEventListener('focus', (e) => { if (e.target.value === '00' || e.target.value === '0') e.target.value = ''; e.target.select(); });
   secInput.addEventListener('blur', (e) => {
     if (e.target.value === '') e.target.value = '00';
     else if (e.target.value.length === 1) e.target.value = '0' + e.target.value;
   });
-
-  // -------------------------- //
 
   div.querySelectorAll('input').forEach(inp => inp.addEventListener('input', calculateRecipe));
   div.querySelector('.remove-step').addEventListener('click', (e) => {
@@ -827,7 +829,7 @@ function downloadBrandedQrCard() {
 }
 
 // ==========================================
-// File I/O
+// FILE I/O (YAML & QR IMAGE UPLOAD)
 // ==========================================
 function downloadCustomConfig() {
   const configName = customNameEl.value || 'My Custom Config';
@@ -860,8 +862,7 @@ function handleFileUpload(e) {
         else allBaristas.unshift(config);
 
         setMode('official');
-        baristaEl.value = config.id;
-        updateMethodsDropdown();
+        renderBaristaDropdown(config.id);
         applyConfigDefaults();
         calculateRecipe();
       } else {
@@ -871,6 +872,48 @@ function handleFileUpload(e) {
   };
   reader.readAsText(file);
   e.target.value = '';
+  importMenuDropdown.classList.add('hidden');
+}
+
+function handleQrUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    const img = new Image();
+    img.onload = () => {
+      // Draw uploaded image to a canvas so jsQR can read its pixels
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(img, 0, 0);
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+      if (code) {
+        const rawData = code.data;
+        if (rawData.includes('?r=')) {
+          const payload = rawData.split('?r=')[1];
+          if (processSharedRecipePayload(payload)) {
+            alert("✅ QR Recipe Loaded Successfully!");
+          } else {
+            alert("❌ Corrupted recipe data inside this QR code.");
+          }
+        } else {
+          alert("❌ This QR code does not contain a Smart Brew recipe.");
+        }
+      } else {
+        alert("❌ No QR code detected. Make sure the image is clear and not cropped.");
+      }
+    };
+    img.src = evt.target.result;
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+  importMenuDropdown.classList.add('hidden');
 }
 
 // ==========================================

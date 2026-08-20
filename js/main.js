@@ -1,4 +1,25 @@
 // ==========================================
+// DATA: FERMENTATION PROCESSES (Grouped & Searchable)
+// ==========================================
+const FERMENTATION_PROCESSES = [
+  { group: "Washed / Wet", items: [{ id: "washed", label: "Washed" }, { id: "double_washed", label: "Double Washed" }] },
+  { group: "Natural / Dry", items: [{ id: "natural", label: "Natural" }, { id: "fruit_maceration", label: "Fruit Maceration" }] },
+  { group: "Honey Process", items: [{ id: "white_honey", label: "White Honey" }, { id: "yellow_honey", label: "Yellow Honey" }, { id: "red_honey", label: "Red Honey" }, { id: "black_honey", label: "Black/Dark Honey" }] },
+  { group: "Experimental / Anaerobic", items: [{ id: "anaerobic_washed", label: "Anaerobic Washed" }, { id: "anaerobic_natural", label: "Anaerobic Natural" }, { id: "carbonic_maceration", label: "Carbonic Maceration" }, { id: "thermal_shock", label: "Thermal Shock" }] }
+];
+
+// ==========================================
+// DATA: CUSTOM BREW METHODS (Grouped & Searchable)
+// ==========================================
+const CUSTOM_BREW_METHODS = [
+  { group: "Conical Drippers", items: [{ id: "v60", label: "Hario V60" }, { id: "origami", label: "Origami Dripper" }, { id: "kono", label: "Kono Meimon" }] },
+  { group: "Flat-Bottom Drippers", items: [{ id: "kalita", label: "Kalita Wave" }, { id: "orea", label: "Orea V3" }, { id: "fellow_stagg", label: "Fellow Stagg X" }] },
+  { group: "Hybrid & Immersion", items: [{ id: "clever", label: "Clever Dripper" }, { id: "switch", label: "Hario Switch" }, { id: "french_press", label: "French Press" }, { id: "aeropress", label: "AeroPress" }] },
+  { group: "Carafe-Style Drippers", items: [{ id: "chemex", label: "Chemex" }] },
+  { group: "Other Brewers", items: [{ id: "moka_pot", label: "Moka Pot" }, { id: "auto_drip", label: "Automatic Drip Machine" }, { id: "cold_brew", label: "Cold Brew" }, { id: "siphon", label: "Siphon" }, { id: "phin", label: "Phin" }] }
+];
+
+// ==========================================
 // PARALLEL CONFIG LOADER (Optimized)
 // ==========================================
 const GITHUB_API_URL = 'https://api.github.com/repos/hkhrithik007/smart-brew-assistant/contents/barista';
@@ -83,9 +104,9 @@ let activeShareConfig = null;
 // ==========================================
 const baristaEl = document.getElementById('barista');
 const methodContainer = document.getElementById('method-container');
-const methodEl = document.getElementById('method');
+const methodEl = document.getElementById('method'); // Now a hidden input
 const roastEl = document.getElementById('roast');
-const fermentationEl = document.getElementById('fermentation');
+const fermentationEl = document.getElementById('fermentation'); // Now a hidden input
 const weightEl = document.getElementById('weight');
 const ratioEl = document.getElementById('ratio');
 const ratioDisplay = document.getElementById('ratio-display');
@@ -97,14 +118,13 @@ const creatorBadgeEl = document.getElementById('creator-badge');
 const recipeTitleEl = document.getElementById('recipe-title');
 const recipeProfileEl = document.getElementById('recipe-profile');
 const recipeNotesEl = document.getElementById('recipe-notes');
-
 const metricsContainer = document.getElementById('metrics-container');
 const tempCardEl = document.getElementById('temp-card');
 
 // Custom Builder Elements
 const customBuilder = document.getElementById('custom-builder');
 const customNameEl = document.getElementById('custom-name');
-const customBrewMethodEl = document.getElementById('custom-brew-method');
+const customBrewMethodEl = document.getElementById('custom-brew-method'); // Now a hidden input
 const customProfileEl = document.getElementById('custom-profile');
 const customNotesEl = document.getElementById('custom-notes');
 const customGrinderNameEl = document.getElementById('custom-grinder-name');
@@ -121,18 +141,14 @@ const stagedMethodsList = document.getElementById('staged-methods-list');
 const recipeGrinderBadgeEl = document.getElementById('recipe-grinder-badge');
 const recipeGrinderTextEl = document.getElementById('recipe-grinder-text');
 
-// Theme Toggle
+// Theme & Modals
 const themeToggleBtn = document.getElementById('theme-toggle');
 const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
 const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
-
-// Preview Modal
 const previewTimelineBtn = document.getElementById('preview-timeline-btn');
 const recipePreviewModal = document.getElementById('recipe-preview-modal');
 const closePreviewBtn = document.getElementById('close-preview-btn');
 const modalContentArea = document.getElementById('modal-content-area');
-
-// QR Modal Elements
 const shareQrBtn = document.getElementById('share-qr-btn');
 const quickShareQrBtn = document.getElementById('quick-share-qr-btn');
 const qrModal = document.getElementById('qr-modal');
@@ -151,17 +167,122 @@ const qrExportCanvas = document.getElementById('qr-export-canvas');
 const baseRoastTemps = {
   'very_light': 97, 'light': 95, 'medium_light': 93, 'medium': 91, 'medium_dark': 89, 'dark': 86, 'very_dark': 82
 };
+// Updated mappings with the new sub-section fermentation tags
 const fermentationOffsets = {
-  'washed': 0, 'yellow_honey': -1, 'red_honey': -1, 'natural': -2,
-  'anaerobic_washed': -2, 'anaerobic_natural': -3, 'carbonic_maceration': -4
+  'washed': 0, 'double_washed': 0,
+  'yellow_honey': -1, 'white_honey': 0, 'red_honey': -1, 'black_honey': -2,
+  'natural': -2, 'fruit_maceration': -2,
+  'anaerobic_washed': -2, 'anaerobic_natural': -3,
+  'carbonic_maceration': -4, 'thermal_shock': -3
 };
 
 function getOptimalTemp(roast, process) {
-  const temp = baseRoastTemps[roast] + fermentationOffsets[process];
+  const temp = baseRoastTemps[roast] + (fermentationOffsets[process] || 0);
   return Math.max(80, Math.min(100, temp));
 }
 
-const noTempMethods = ['moka_pot', 'cold_brew', 'siphon', 'phin'];
+// Added auto_drip to noTempMethods
+const noTempMethods = ['moka_pot', 'cold_brew', 'siphon', 'phin', 'auto_drip'];
+
+// ==========================================
+// CUSTOM SEARCHABLE UI INITIALIZER
+// ==========================================
+function initSearchableDropdown(wrapperId, groups, defaultVal = null) {
+  const wrapper = document.getElementById(wrapperId);
+  if (!wrapper) return;
+
+  const toggle = wrapper.querySelector('.dropdown-toggle');
+  const menu = wrapper.querySelector('.dropdown-menu');
+  const search = wrapper.querySelector('.search-input');
+  const list = wrapper.querySelector('.option-list');
+  const textSpan = wrapper.querySelector('.selected-text');
+  const hiddenInput = wrapper.querySelector('input[type="hidden"]');
+
+  // Set default visual label
+  if (defaultVal) {
+    hiddenInput.value = defaultVal;
+    let foundLabel = "";
+    groups.forEach(g => g.items.forEach(i => { if (i.id === defaultVal) foundLabel = i.label; }));
+    textSpan.textContent = foundLabel || "Select...";
+  }
+
+  function populate(filter = "") {
+    list.innerHTML = "";
+    let hasResults = false;
+
+    groups.forEach(g => {
+      const matchedItems = g.items.filter(i => i.label.toLowerCase().includes(filter.toLowerCase()));
+      if (matchedItems.length > 0) {
+        hasResults = true;
+
+        // Render Group Header
+        if (g.group) {
+          const groupLabel = document.createElement('div');
+          groupLabel.className = "px-3 pt-3 pb-1 text-[10px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-wider sticky top-0 bg-white dark:bg-stone-800 z-10 shadow-[0_4px_4px_-4px_rgba(0,0,0,0.1)]";
+          groupLabel.textContent = g.group;
+          list.appendChild(groupLabel);
+        }
+
+        // Render Items
+        matchedItems.forEach(item => {
+          const opt = document.createElement('div');
+          opt.className = "px-3 py-2 mt-1 cursor-pointer text-sm font-medium text-stone-700 dark:text-stone-200 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-700 dark:hover:text-amber-400 rounded-md transition-colors option-item";
+          opt.textContent = item.label;
+
+          if (hiddenInput.value === item.id) {
+            opt.classList.add('bg-amber-50', 'dark:bg-amber-900/30', 'text-amber-700', 'dark:text-amber-400');
+          }
+
+          opt.addEventListener('click', (e) => {
+            e.stopPropagation();
+            hiddenInput.value = item.id;
+            textSpan.textContent = item.label;
+            menu.classList.add('hidden');
+            // Trigger standard JS event listeners 
+            hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+          });
+          list.appendChild(opt);
+        });
+      }
+    });
+    if (!hasResults) {
+      list.innerHTML = `<div class="px-3 py-4 text-center text-xs text-stone-500 dark:text-stone-400">No options found</div>`;
+    }
+  }
+
+  // Clone node to safely remove old event listeners if initializing dynamically
+  const newToggle = toggle.cloneNode(true);
+  toggle.parentNode.replaceChild(newToggle, toggle);
+  const newSearch = search.cloneNode(true);
+  search.parentNode.replaceChild(newSearch, search);
+
+  newToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (newToggle.disabled) return;
+
+    // Close other open menus
+    document.querySelectorAll('.dropdown-menu').forEach(m => {
+      if (m !== menu) m.classList.add('hidden');
+    });
+
+    menu.classList.toggle('hidden');
+    if (!menu.classList.contains('hidden')) {
+      newSearch.value = "";
+      populate();
+      setTimeout(() => newSearch.focus(), 50);
+    }
+  });
+
+  newSearch.addEventListener('input', (e) => populate(e.target.value));
+  populate();
+}
+
+// Global click listener to close custom dropdown menus
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.custom-dropdown')) {
+    document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.add('hidden'));
+  }
+});
 
 // ==========================================
 // Initialization & Loading
@@ -214,6 +335,10 @@ async function initializeApp() {
       allBaristas = [...EMERGENCY_FALLBACK_DATA];
     }
 
+    // Initialize the fixed custom searchable dropdowns
+    initSearchableDropdown('fermentation-wrapper', FERMENTATION_PROCESSES, 'washed');
+    initSearchableDropdown('custom-brew-method-wrapper', CUSTOM_BREW_METHODS, 'v60');
+
     // CHECK FOR URL QR PAYLOAD (?r=...)
     checkUrlForSharedRecipe();
 
@@ -245,7 +370,7 @@ function checkUrlForSharedRecipe() {
         if (sharedConfig && sharedConfig.id && sharedConfig.methods) {
           const existingIdx = allBaristas.findIndex(b => b.id === sharedConfig.id);
           if (existingIdx > -1) allBaristas[existingIdx] = sharedConfig;
-          else allBaristas.unshift(sharedConfig); // Place shared recipe at top
+          else allBaristas.unshift(sharedConfig);
 
           setTimeout(() => {
             baristaEl.value = sharedConfig.id;
@@ -306,18 +431,20 @@ function setupEventListeners() {
     updateMethodsDropdown();
     calculateRecipe();
   });
+
+  // Custom dropdowns fire standard 'change' events from their hidden inputs
   methodEl.addEventListener('change', () => {
     applyConfigDefaults();
     calculateRecipe();
   });
-
   roastEl.addEventListener('change', calculateRecipe);
   fermentationEl.addEventListener('change', calculateRecipe);
+  customBrewMethodEl.addEventListener('change', calculateRecipe);
+
   weightEl.addEventListener('input', calculateRecipe);
   ratioEl.addEventListener('input', calculateRecipe);
 
   customNameEl.addEventListener('input', calculateRecipe);
-  customBrewMethodEl.addEventListener('change', calculateRecipe);
   customProfileEl.addEventListener('input', calculateRecipe);
   customNotesEl.addEventListener('input', calculateRecipe);
   customGrinderNameEl.addEventListener('input', calculateRecipe);
@@ -369,13 +496,24 @@ function applyConfigDefaults() {
     const activeBarista = allBaristas.find(b => b.id === baristaEl.value);
     if (activeBarista) {
       if (activeBarista.default_roast) roastEl.value = activeBarista.default_roast;
-      if (activeBarista.default_process) fermentationEl.value = activeBarista.default_process;
+      if (activeBarista.default_process) {
+        fermentationEl.value = activeBarista.default_process;
+
+        // Force visual update on the custom dropdown text span
+        const wrapper = document.getElementById('fermentation-wrapper');
+        const textSpan = wrapper.querySelector('.selected-text');
+        let foundLabel = activeBarista.default_process;
+        FERMENTATION_PROCESSES.forEach(g => g.items.forEach(i => { if (i.id === activeBarista.default_process) foundLabel = i.label; }));
+        textSpan.textContent = foundLabel;
+      }
       if (activeBarista.default_dose) weightEl.value = activeBarista.default_dose;
     }
   }
 }
 
 function updateMethodsDropdown() {
+  const methodBtn = document.getElementById('method-btn');
+
   if (baristaEl.value === 'custom') {
     methodContainer.classList.add('hidden');
     customBuilder.classList.remove('hidden');
@@ -390,9 +528,28 @@ function updateMethodsDropdown() {
   ratioLockIcon.classList.remove('hidden');
 
   const selectedBarista = allBaristas.find(b => b.id === baristaEl.value);
+
   if (selectedBarista && selectedBarista.methods) {
-    methodEl.innerHTML = Object.keys(selectedBarista.methods).map(k => `<option value="${k}">${selectedBarista.methods[k].label}</option>`).join('');
-    methodEl.disabled = false;
+    methodBtn.disabled = false;
+
+    // Dynamically build the group list for the searchable dropdown based on what the config provides
+    const dynamicMethods = [{
+      group: "Available Recipes",
+      items: Object.keys(selectedBarista.methods).map(k => ({
+        id: k,
+        label: selectedBarista.methods[k].label
+      }))
+    }];
+
+    // Validate current selection, fallback to first option if invalid
+    let currentVal = methodEl.value;
+    if (!Object.keys(selectedBarista.methods).includes(currentVal)) {
+      currentVal = Object.keys(selectedBarista.methods)[0];
+    }
+
+    initSearchableDropdown('method-wrapper', dynamicMethods, currentVal);
+  } else {
+    methodBtn.disabled = true;
   }
 }
 
@@ -401,7 +558,8 @@ function updateMethodsDropdown() {
 // ==========================================
 function stageCurrentMethod() {
   const methodId = customBrewMethodEl.value;
-  const methodLabel = customBrewMethodEl.options[customBrewMethodEl.selectedIndex].text;
+  // Retrieve text from custom dropdown UI rather than native options
+  const methodLabel = document.querySelector('#custom-brew-method-wrapper .selected-text').textContent;
 
   const steps = Array.from(document.querySelectorAll('.step-row')).map(row => {
     const min = row.querySelector('.custom-step-min').value || '0';
@@ -515,19 +673,16 @@ function triggerQrModal(fromCustomBuilder = false) {
   if (!configToShare) return;
   activeShareConfig = configToShare;
 
-  // Compress into URL
   const jsonStr = JSON.stringify(configToShare);
   const compressed = LZString.compressToEncodedURIComponent(jsonStr);
   const baseUrl = window.location.origin + window.location.pathname;
   activeShareUrl = `${baseUrl}?r=${compressed}`;
 
-  // Update modal text
   qrModalTitle.textContent = configToShare.name;
   const firstMethodKey = Object.keys(configToShare.methods)[0];
   const methodData = configToShare.methods[firstMethodKey];
   qrModalSubtitle.textContent = methodData ? `${methodData.label} • Ratio 1:${methodData.ratio}` : 'Ready to Brew';
 
-  // Render QR Code inside target container
   qrcodeTarget.innerHTML = '';
   new QRCode(qrcodeTarget, {
     text: activeShareUrl,
@@ -538,7 +693,6 @@ function triggerQrModal(fromCustomBuilder = false) {
     correctLevel: QRCode.CorrectLevel.M
   });
 
-  // Show modal
   qrModal.classList.remove('hidden');
   setTimeout(() => {
     qrModal.classList.remove('opacity-0');
@@ -561,7 +715,6 @@ function copyDirectLink() {
   });
 }
 
-// Download Branded Canvas Card (smart-brew-assistant.png)
 function downloadBrandedQrCard() {
   if (!activeShareConfig) return;
 
@@ -571,25 +724,21 @@ function downloadBrandedQrCard() {
   canvas.width = 800;
   canvas.height = 1050;
 
-  // Background gradient
   const bgGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  bgGrad.addColorStop(0, '#1c1917'); // stone-900
-  bgGrad.addColorStop(1, '#0c0a09'); // stone-950
+  bgGrad.addColorStop(0, '#1c1917');
+  bgGrad.addColorStop(1, '#0c0a09');
   ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Outer Accent Border
-  ctx.strokeStyle = '#d97706'; // amber-600
+  ctx.strokeStyle = '#d97706';
   ctx.lineWidth = 8;
   ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
 
-  // App Title Header
   ctx.fillStyle = '#f59e0b';
   ctx.font = 'bold 30px sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('SMART BREW ASSISTANT', canvas.width / 2, 90);
 
-  // Divider Line
   ctx.strokeStyle = '#292524';
   ctx.lineWidth = 2;
   ctx.beginPath();
@@ -597,12 +746,10 @@ function downloadBrandedQrCard() {
   ctx.lineTo(canvas.width - 80, 120);
   ctx.stroke();
 
-  // Recipe Name
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 44px sans-serif';
   ctx.fillText(activeShareConfig.name, canvas.width / 2, 190);
 
-  // Method & Grinder Subtitle
   const firstMethodKey = Object.keys(activeShareConfig.methods)[0];
   const methodData = activeShareConfig.methods[firstMethodKey];
   const methodLabel = methodData?.label || 'Custom Brew';
@@ -613,7 +760,6 @@ function downloadBrandedQrCard() {
   ctx.fillText(`${methodLabel} • 1:${methodData?.ratio || 16}`, canvas.width / 2, 240);
   ctx.fillText(`Grinder: ${grinderInfo}`, canvas.width / 2, 280);
 
-  // QR Code Image Holder Card
   const qrBoxSize = 420;
   const qrX = (canvas.width - qrBoxSize) / 2;
   const qrY = 330;
@@ -623,25 +769,21 @@ function downloadBrandedQrCard() {
   ctx.roundRect(qrX, qrY, qrBoxSize, qrBoxSize, [24]);
   ctx.fill();
 
-  // Grab rendered QR code from the DOM
   const qrImg = qrcodeTarget.querySelector('img') || qrcodeTarget.querySelector('canvas');
   if (qrImg) {
     ctx.drawImage(qrImg, qrX + 30, qrY + 30, qrBoxSize - 60, qrBoxSize - 60);
   }
 
-  // Scan instruction
   ctx.fillStyle = '#fbbf24';
   ctx.font = 'bold 24px sans-serif';
   ctx.fillText('Scan with Camera to Brew Live', canvas.width / 2, 820);
 
-  // Bottom Trademark & Author
   ctx.fillStyle = '#78716c';
   ctx.font = 'bold 20px sans-serif';
   ctx.fillText('© 2026 Smart Brew Assistant™ • Crafted by Hritik Sharma', canvas.width / 2, 940);
   ctx.font = '16px sans-serif';
   ctx.fillText('https://hkhrithik007.github.io/smart-brew-assistant/', canvas.width / 2, 975);
 
-  // Download Trigger
   const link = document.createElement('a');
   link.download = `smart-brew-assistant-${activeShareConfig.id || 'recipe'}.png`;
   link.href = canvas.toDataURL('image/png');

@@ -70,6 +70,21 @@
       .time-dial {
         -moz-appearance: textfield;
       }
+
+      /* Custom Scrollbar for Searchable Dropdowns */
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background-color: #d6d3d1;
+        border-radius: 20px;
+      }
+      .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+        background-color: #44403c;
+      }
     </style>
   </head>
 
@@ -207,17 +222,53 @@
             </select>
           </div>
 
+          <!-- SEARCHABLE MAIN BREW METHOD -->
           <div id="method-container">
             <label
               class="block text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2"
               for="method"
               >Brew Method</label
             >
-            <select
-              id="method"
-              class="w-full bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 py-3 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600 transition-all shadow-sm appearance-none"
-              disabled
-            ></select>
+            <div class="relative w-full custom-dropdown" id="method-wrapper">
+              <button
+                type="button"
+                class="w-full bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 py-3 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600 transition-all shadow-sm flex justify-between items-center text-left dropdown-toggle disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled
+                id="method-btn"
+              >
+                <span class="selected-text truncate">Loading...</span>
+                <svg
+                  class="w-4 h-4 text-stone-400 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 9l-7 7-7-7"
+                  ></path>
+                </svg>
+              </button>
+              <div
+                class="absolute z-[60] w-full mt-2 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl shadow-2xl hidden flex-col dropdown-menu overflow-hidden"
+              >
+                <div
+                  class="p-2 border-b border-stone-100 dark:border-stone-700 bg-stone-50 dark:bg-stone-900/50"
+                >
+                  <input
+                    type="text"
+                    class="w-full bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 py-2 px-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm search-input"
+                    placeholder="Search methods..."
+                  />
+                </div>
+                <div
+                  class="max-h-60 overflow-y-auto p-1 option-list custom-scrollbar"
+                ></div>
+              </div>
+              <input type="hidden" id="method" value="" />
+            </div>
           </div>
 
           <div class="grid grid-cols-2 gap-3 md:gap-4">
@@ -240,24 +291,55 @@
                 <option value="very_dark">Very Dark</option>
               </select>
             </div>
+
+            <!-- SEARCHABLE FERMENTATION PROCESS -->
             <div>
               <label
                 class="block text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2"
                 for="fermentation"
                 >Process</label
               >
-              <select
-                id="fermentation"
-                class="w-full bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 py-3 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600 shadow-sm appearance-none"
+              <div
+                class="relative w-full custom-dropdown"
+                id="fermentation-wrapper"
               >
-                <option value="washed">Washed</option>
-                <option value="yellow_honey">Yellow Honey</option>
-                <option value="red_honey">Red/Black Honey</option>
-                <option value="natural" selected>Natural</option>
-                <option value="anaerobic_washed">Anaerobic Washed</option>
-                <option value="anaerobic_natural">Anaerobic Natural</option>
-                <option value="carbonic_maceration">Carbonic Mac.</option>
-              </select>
+                <button
+                  type="button"
+                  class="w-full bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 py-3 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600 transition-all shadow-sm flex justify-between items-center text-left dropdown-toggle"
+                >
+                  <span class="selected-text truncate">Washed</span>
+                  <svg
+                    class="w-4 h-4 text-stone-400 shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 9l-7 7-7-7"
+                    ></path>
+                  </svg>
+                </button>
+                <div
+                  class="absolute z-[60] w-full mt-2 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl shadow-2xl hidden flex-col dropdown-menu overflow-hidden"
+                >
+                  <div
+                    class="p-2 border-b border-stone-100 dark:border-stone-700 bg-stone-50 dark:bg-stone-900/50"
+                  >
+                    <input
+                      type="text"
+                      class="w-full bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 py-2 px-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm search-input"
+                      placeholder="Search processes..."
+                    />
+                  </div>
+                  <div
+                    class="max-h-60 overflow-y-auto p-1 option-list custom-scrollbar"
+                  ></div>
+                </div>
+                <input type="hidden" id="fermentation" value="washed" />
+              </div>
             </div>
           </div>
 
@@ -345,25 +427,54 @@
                   class="w-full bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 py-2.5 px-3 rounded-lg focus:ring-2 focus:ring-amber-600 text-sm"
                 />
               </div>
+
+              <!-- SEARCHABLE CUSTOM BREWING TOOL -->
               <div>
                 <label
                   class="block text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2"
                   >Brewing Tool</label
                 >
-                <select
-                  id="custom-brew-method"
-                  class="w-full bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 py-2.5 px-3 rounded-lg focus:ring-2 focus:ring-amber-600 text-sm appearance-none shadow-sm"
+                <div
+                  class="relative w-full custom-dropdown"
+                  id="custom-brew-method-wrapper"
                 >
-                  <option value="v60">Pour Over (V60)</option>
-                  <option value="aeropress">AeroPress</option>
-                  <option value="french_press">French Press</option>
-                  <option value="chemex">Chemex</option>
-                  <option value="clever">Clever Dripper</option>
-                  <option value="cold_brew">Cold Brew</option>
-                  <option value="moka_pot">Moka Pot</option>
-                  <option value="siphon">Siphon</option>
-                  <option value="phin">Phin</option>
-                </select>
+                  <button
+                    type="button"
+                    class="w-full bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 py-2.5 px-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600 text-sm shadow-sm flex justify-between items-center text-left dropdown-toggle"
+                  >
+                    <span class="selected-text truncate">Hario V60</span>
+                    <svg
+                      class="w-4 h-4 text-stone-400 shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M19 9l-7 7-7-7"
+                      ></path>
+                    </svg>
+                  </button>
+                  <div
+                    class="absolute z-[60] w-full mt-2 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl shadow-2xl hidden flex-col dropdown-menu overflow-hidden"
+                  >
+                    <div
+                      class="p-2 border-b border-stone-100 dark:border-stone-700 bg-stone-50 dark:bg-stone-900/50"
+                    >
+                      <input
+                        type="text"
+                        class="w-full bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 py-2 px-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm search-input"
+                        placeholder="Search brewers..."
+                      />
+                    </div>
+                    <div
+                      class="max-h-60 overflow-y-auto p-1 option-list custom-scrollbar"
+                    ></div>
+                  </div>
+                  <input type="hidden" id="custom-brew-method" value="v60" />
+                </div>
               </div>
             </div>
 
@@ -483,7 +594,7 @@
               <div id="staged-methods-list" class="flex flex-wrap gap-2"></div>
             </div>
 
-            <!-- ACTION BUTTONS (Export & Share QR) -->
+            <!-- ACTION BUTTONS -->
             <div
               class="pt-4 mt-4 border-t border-stone-200 dark:border-stone-700 flex flex-col sm:flex-row gap-2"
             >
@@ -540,7 +651,6 @@
           >
             Extraction Profile
           </h2>
-          <!-- Right Panel Quick Share Button -->
           <button
             id="quick-share-qr-btn"
             class="p-2 text-stone-500 hover:text-amber-700 dark:hover:text-amber-400 bg-stone-100 dark:bg-stone-800 rounded-lg transition-colors border border-stone-200 dark:border-stone-700 flex items-center gap-1 text-xs font-bold"
@@ -667,7 +777,7 @@
       <span>Crafted by Hritik Sharma</span>
     </div>
 
-    <!-- BACKGROUND IMAGE DECORATIONS -->
+    <!-- BACKGROUND DECORATIONS -->
     <img
       src="images/coffee.png"
       alt="Coffee Graphic"
@@ -793,7 +903,6 @@
           <div id="qrcode-target"></div>
         </div>
 
-        <!-- Hidden Canvas used for Card Generation -->
         <canvas id="qr-export-canvas" class="hidden"></canvas>
 
         <div class="w-full space-y-2">

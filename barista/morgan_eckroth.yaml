@@ -7,6 +7,8 @@ methods:
   v60:
     label: "Pour Over (V60)"
     ratio: 16.0
+    grinder_name: "Timemore C2s"
+    grind_size: 20
     result_type: "Balanced, everyday cup with great clarity."
     steps:
       - time: "0:00"
@@ -24,6 +26,8 @@ methods:
   french_press:
     label: "French Press"
     ratio: 15.0
+    grinder_name: "Timemore C2s"
+    grind_size: 24
     result_type: "Full-bodied, rich, and sweet cup."
     steps:
       - time: "0:00"
@@ -38,6 +42,8 @@ methods:
   aeropress:
     label: "AeroPress"
     ratio: 16.0
+    grinder_name: "Timemore C2s"
+    grind_size: 16
     result_type: "Easy, versatile, and well-extracted cup."
     steps:
       - time: "0:00"
@@ -55,6 +61,8 @@ methods:
   moka_pot:
     label: "Moka Pot"
     ratio: 10.0
+    grinder_name: "Timemore C2s"
+    grind_size: 15
     result_type: "Rich, highly concentrated, espresso-like coffee."
     steps:
       - time: "0:00"

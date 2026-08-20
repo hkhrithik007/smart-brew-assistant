@@ -134,11 +134,11 @@
       </h1>
     </div>
 
-    <!-- MAIN APP CONTAINER (Reverted to flex-col for normal top-down stacking) -->
+    <!-- MAIN APP CONTAINER -->
     <div
       class="w-full max-w-5xl bg-white/90 dark:bg-stone-900/90 backdrop-blur-xl rounded-2xl md:rounded-3xl shadow-2xl shadow-amber-900/10 dark:shadow-black/50 overflow-hidden flex flex-col md:flex-row border border-white dark:border-stone-800 z-10 relative transition-colors duration-300"
     >
-      <!-- Left Panel: Inputs (Now back on top for mobile) -->
+      <!-- Left Panel: Inputs -->
       <div
         class="w-full md:w-5/12 bg-stone-50/60 dark:bg-stone-950/60 p-4 sm:p-6 lg:p-10 border-b md:border-b-0 md:border-r border-stone-100 dark:border-stone-800 h-auto md:h-[80vh] overflow-y-visible md:overflow-y-auto transition-colors duration-300"
       >
@@ -364,6 +364,35 @@
               </div>
             </div>
 
+            <!-- NEW GRINDER INPUT SECTION -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label
+                  class="block text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2"
+                  >Grinder Name</label
+                >
+                <input
+                  type="text"
+                  id="custom-grinder-name"
+                  placeholder="e.g., Comandante C40"
+                  class="w-full bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 py-2.5 px-3 rounded-lg focus:ring-2 focus:ring-amber-600 text-sm"
+                />
+              </div>
+              <div>
+                <label
+                  class="block text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2"
+                  >Grind Size</label
+                >
+                <!-- type="number" strictly enforces numerical input -->
+                <input
+                  type="number"
+                  id="custom-grinder-size"
+                  placeholder="e.g., 15"
+                  class="w-full bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 py-2.5 px-3 rounded-lg focus:ring-2 focus:ring-amber-600 text-sm"
+                />
+              </div>
+            </div>
+
             <div>
               <label
                 class="block text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2"
@@ -391,7 +420,7 @@
             </div>
 
             <div>
-              <!-- NEW PREVIEW BUTTON -->
+              <!-- PREVIEW BUTTON -->
               <div class="flex justify-between items-center mb-2">
                 <label
                   class="block text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider"
@@ -485,7 +514,7 @@
         </div>
       </div>
 
-      <!-- Right Panel: Outputs (Back on bottom for mobile) -->
+      <!-- Right Panel: Outputs -->
       <div
         class="w-full md:w-7/12 p-5 sm:p-6 lg:p-12 h-auto md:h-[80vh] overflow-y-auto transition-colors duration-300"
       >
@@ -541,13 +570,41 @@
         <div>
           <h3
             id="recipe-title"
-            class="text-lg md:text-xl font-bold text-stone-900 dark:text-stone-50"
+            class="text-lg md:text-xl font-bold text-stone-900 dark:text-stone-50 inline-block"
           >
             Awaiting Configuration...
           </h3>
+
+          <!-- NEW GRINDER INFO BADGE (Outputs here) -->
+          <div
+            id="recipe-grinder-badge"
+            class="hidden mt-2 mb-1 flex items-center gap-1.5 px-2.5 py-1 w-max bg-stone-100 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700 rounded-md text-[11px] font-bold text-stone-600 dark:text-stone-300"
+          >
+            <svg
+              class="w-3.5 h-3.5 text-amber-600 dark:text-amber-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+              ></path>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              ></path>
+            </svg>
+            <span id="recipe-grinder-text"></span>
+          </div>
+
           <p
             id="recipe-profile"
-            class="text-xs md:text-sm font-medium text-stone-500 dark:text-stone-400 mt-1 italic"
+            class="text-xs md:text-sm font-medium text-stone-500 dark:text-stone-400 mt-2 italic"
           ></p>
 
           <p
@@ -591,9 +648,7 @@
       class="hidden xl:block fixed -top-8 -left-8 w-[20rem] opacity-30 dark:opacity-20 drop-shadow-2xl pointer-events-none z-0 transform -rotate-12 grayscale-[30%] dark:grayscale-[50%] mix-blend-multiply dark:mix-blend-screen"
     />
 
-    <!-- ========================================== -->
-    <!-- NEW MOBILE PREVIEW MODAL -->
-    <!-- ========================================== -->
+    <!-- MOBILE PREVIEW MODAL -->
     <div
       id="recipe-preview-modal"
       class="hidden fixed inset-0 z-[100] bg-stone-900/80 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 transition-opacity duration-300"

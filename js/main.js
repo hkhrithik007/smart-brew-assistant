@@ -9,13 +9,64 @@ const EMERGENCY_FALLBACK_DATA = [
     id: "james_hoffmann", name: "James Hoffmann", default_roast: "medium_light", default_process: "washed", default_dose: 15,
     methods: {
       v60: {
-        label: "Pour Over (V60)", ratio: 16.6, result_type: "Clean, sweet, and bright cup.", notes: "Based on the Ultimate 1-Cup V60 method. Use water just off the boil.", steps: [
+        label: "Pour Over (V60)", ratio: 16.6, grinder_name: "Timemore C2s", grind_size: 20, result_type: "Clean, sweet, and bright cup.", notes: "Based on the Ultimate 1-Cup V60 method. Use water just off the boil.", steps: [
           { time: "0:00", water: "{{chunk_1}}", text: "Pour {{chunk_1}}g of water to bloom. Gently swirl from 0:10 - 0:15." },
           { time: "0:45", water: "{{chunk_2}}", text: "Pour up to {{chunk_2}}g total over 15 seconds. Pause until 1:10." },
           { time: "1:10", water: "{{chunk_3}}", text: "Pour up to {{chunk_3}}g total over 10 seconds. Pause until 1:30." },
           { time: "1:30", water: "{{chunk_4}}", text: "Pour up to {{chunk_4}}g total over 10 seconds. Pause until 1:50." },
           { time: "1:50", water: "{{water}}", text: "Pour up to {{water}}g total over 10 seconds." },
           { time: "2:00", water: "", text: "Give the brewer a final gentle swirl and let it draw down." }
+        ]
+      },
+      french_press: {
+        label: "French Press", ratio: 15.0, grinder_name: "Timemore C2s", grind_size: 24, result_type: "Heavy body, rich and textured.", notes: "James Hoffmann Ultimate French Press technique.", steps: [
+          { time: "0:00", water: "{{water}}", text: "Pour all {{water}}g of water. Wait 4 minutes." },
+          { time: "4:00", water: "", text: "Stir the crust. Scoop off the foam and floating bits. Wait 5 more minutes." },
+          { time: "9:00", water: "", text: "Plunge just to the surface of the coffee and pour gently." }
+        ]
+      },
+      moka_pot: {
+        label: "Moka Pot", ratio: 10.0, grinder_name: "Timemore C2s", grind_size: 15, result_type: "Strong, espresso-like intensity.", notes: "Fill base with boiling water. Start on medium-low heat.", steps: [
+          { time: "0:00", water: "", text: "Assemble with boiling water in the base and place on medium-low heat." },
+          { time: "0:00", water: "", text: "When coffee starts flowing fast and bubbling lighter, remove from heat." },
+          { time: "0:00", water: "", text: "Run the base under cold water immediately to stop extraction." }
+        ]
+      }
+    }
+  },
+  {
+    id: "morgan_eckroth", name: "Morgan Eckroth", default_roast: "light", default_process: "washed", default_dose: 15,
+    methods: {
+      v60: {
+        label: "Pour Over (V60)", ratio: 16.0, grinder_name: "Timemore C2s", grind_size: 20, result_type: "Balanced, everyday cup with great clarity.", steps: [
+          { time: "0:00", water: "{{chunk_1}}", text: "Pour water in a spiral motion for the bloom. Let it rest and let the CO2 escape." },
+          { time: "0:30", water: "{{chunk_3}}", text: "Pour the next batch of water in a spiral motion, starting in the center and working towards the edges." },
+          { time: "1:30", water: "{{water}}", text: "Pour the remaining water. The drawdown should finish right around 2:15 to 2:30." },
+          { time: "2:30", water: "", text: "Drawdown completes. Serve and enjoy!" }
+        ]
+      },
+      french_press: {
+        label: "French Press", ratio: 15.0, grinder_name: "Timemore C2s", grind_size: 24, result_type: "Full-bodied, rich, and sweet cup.", steps: [
+          { time: "0:00", water: "", text: "Add roughly 2x the coffee weight in water for the bloom. Use a spoon to stir lightly, ensuring all grounds are saturated." },
+          { time: "0:30", water: "{{water}}", text: "Add the remaining water. Give it one final stir and place the plunger resting lightly on the surface (do not push down)." },
+          { time: "4:30", water: "", text: "Remove from scale. Plunge slowly until the coffee bed is almost compacted at the bottom. Do not press hard into the grounds." }
+        ]
+      },
+      aeropress: {
+        label: "AeroPress", ratio: 16.0, grinder_name: "Timemore C2s", grind_size: 16, result_type: "Easy, versatile, and well-extracted cup.", steps: [
+          { time: "0:00", water: "{{water}}", text: "Standard orientation. Add all of your water right off the bat. Give it a stir to incorporate the grounds." },
+          { time: "0:15", water: "", text: "Place the plunger on top at a slight angle to create a vacuum seal. This stops coffee from dripping through early." },
+          { time: "1:30", water: "", text: "Straighten out the plunger and begin pushing down slowly and steadily (this should take 15-30 seconds)." },
+          { time: "2:00", water: "", text: "Stop plunging when you feel the bed compact or hear a slight hiss." }
+        ]
+      },
+      moka_pot: {
+        label: "Moka Pot", ratio: 10.0, grinder_name: "Timemore C2s", grind_size: 15, result_type: "Rich, highly concentrated, espresso-like coffee.", steps: [
+          { time: "0:00", water: "", text: "Fill the lower chamber with preheated water up to just below the pressure release valve." },
+          { time: "0:15", water: "", text: "Fill the basket to the top with coffee (do not tamp or compress). Assemble the pot using a towel to protect your hands." },
+          { time: "0:30", water: "", text: "Place on the stove over medium heat. Leave the lid open so you can keep an eye on the brew." },
+          { time: "2:00", water: "", text: "As soon as coffee starts to bubble up into the top chamber, reduce the stove to low heat." },
+          { time: "3:00", water: "", text: "When you hear the coffee sputtering, close the lid and remove the pot entirely from the heat. Pour immediately." }
         ]
       }
     }
@@ -54,6 +105,8 @@ const customNameEl = document.getElementById('custom-name');
 const customBrewMethodEl = document.getElementById('custom-brew-method');
 const customProfileEl = document.getElementById('custom-profile');
 const customNotesEl = document.getElementById('custom-notes');
+const customGrinderNameEl = document.getElementById('custom-grinder-name'); // NEW
+const customGrinderSizeEl = document.getElementById('custom-grinder-size'); // NEW
 const customStepsContainer = document.getElementById('custom-steps-container');
 const addStepBtn = document.getElementById('add-step-btn');
 const stageMethodBtn = document.getElementById('stage-method-btn');
@@ -61,6 +114,10 @@ const downloadConfigBtn = document.getElementById('download-config-btn');
 const loadConfigFile = document.getElementById('load-config-file');
 const stagedMethodsContainer = document.getElementById('staged-methods-container');
 const stagedMethodsList = document.getElementById('staged-methods-list');
+
+// Grinder Display Elements
+const recipeGrinderBadgeEl = document.getElementById('recipe-grinder-badge'); // NEW
+const recipeGrinderTextEl = document.getElementById('recipe-grinder-text'); // NEW
 
 // Dark Mode Toggle
 const themeToggleBtn = document.getElementById('theme-toggle');
@@ -101,7 +158,6 @@ async function initializeApp() {
     let yamlFilesToFetch = [];
     let loadSuccess = false;
 
-    // TIER 1: Check Local `index.json` first
     try {
       const indexResponse = await fetch(LOCAL_INDEX_URL);
       if (indexResponse.ok) {
@@ -111,7 +167,6 @@ async function initializeApp() {
       }
     } catch (e) { console.log("Local index not found, falling back to GitHub API..."); }
 
-    // TIER 2: Check live GitHub API 
     if (!loadSuccess) {
       try {
         const response = await fetch(GITHUB_API_URL);
@@ -123,7 +178,6 @@ async function initializeApp() {
       } catch (e) { console.log("GitHub API failed."); }
     }
 
-    // TIER 3: Fetch all files simultaneously in PARALLEL 
     if (loadSuccess && yamlFilesToFetch.length > 0) {
       await Promise.all(yamlFilesToFetch.map(async (url) => {
         try {
@@ -137,7 +191,6 @@ async function initializeApp() {
       }));
     }
 
-    // TIER 4: Emergency Fallback
     if (allBaristas.length === 0) {
       console.warn("Using Emergency Hardcoded Fallback.");
       allBaristas = [...EMERGENCY_FALLBACK_DATA];
@@ -216,6 +269,10 @@ function setupEventListeners() {
   customProfileEl.addEventListener('input', calculateRecipe);
   customNotesEl.addEventListener('input', calculateRecipe);
 
+  // NEW: Add event listeners for the grinder inputs
+  customGrinderNameEl.addEventListener('input', calculateRecipe);
+  customGrinderSizeEl.addEventListener('input', calculateRecipe);
+
   addStepBtn.addEventListener('click', () => { addCustomStepRow(); calculateRecipe(); });
   stageMethodBtn.addEventListener('click', stageCurrentMethod);
   downloadConfigBtn.addEventListener('click', downloadCustomConfig);
@@ -224,7 +281,6 @@ function setupEventListeners() {
   // Modal Listeners
   if (previewTimelineBtn) {
     previewTimelineBtn.addEventListener('click', () => {
-      // Clone the timeline and inject it into the modal
       modalContentArea.innerHTML = `
             <h3 class="text-lg font-extrabold text-stone-900 dark:text-stone-50 mb-2">${recipeTitleEl.textContent || 'Custom Recipe'}</h3>
             <div class="relative border-l-2 border-amber-200 dark:border-amber-800/50 ml-2 mt-4 space-y-6 pb-2">
@@ -300,9 +356,12 @@ function stageCurrentMethod() {
     };
   });
 
+  // Now successfully injecting the grinder parameters into the YAML config
   stagedCustomMethods[methodId] = {
     label: methodLabel,
     ratio: parseFloat(ratioEl.value),
+    grinder_name: customGrinderNameEl.value || null,
+    grind_size: customGrinderSizeEl.value ? Number(customGrinderSizeEl.value) : null,
     result_type: customProfileEl.value || "Custom dialed profile.",
     notes: customNotesEl.value || "",
     steps: steps
@@ -311,6 +370,8 @@ function stageCurrentMethod() {
   renderStagedMethods();
   customProfileEl.value = '';
   customNotesEl.value = '';
+  customGrinderNameEl.value = ''; // Clean up grinder fields after save
+  customGrinderSizeEl.value = '';
   customStepsContainer.innerHTML = '';
   addCustomStepRow();
   calculateRecipe();
@@ -494,6 +555,16 @@ function calculateRecipe() {
     recipeTitleEl.textContent = customNameEl.value || 'Untitled Brew Method';
     recipeProfileEl.textContent = customProfileEl.value ? `Target: ${customProfileEl.value}` : '';
 
+    // Live update for Grinder Data Badge
+    if (customGrinderNameEl.value || customGrinderSizeEl.value) {
+      const gName = customGrinderNameEl.value || "Custom Grinder";
+      const gSize = customGrinderSizeEl.value ? ` (Size: ${customGrinderSizeEl.value})` : "";
+      recipeGrinderTextEl.textContent = `${gName}${gSize}`;
+      recipeGrinderBadgeEl.classList.remove('hidden');
+    } else {
+      recipeGrinderBadgeEl.classList.add('hidden');
+    }
+
     if (customNotesEl.value) {
       recipeNotesEl.textContent = customNotesEl.value;
       recipeNotesEl.classList.remove('hidden');
@@ -524,6 +595,16 @@ function calculateRecipe() {
       creatorBadgeEl.className = "inline-block py-1 px-3 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 text-[10px] md:text-xs font-bold tracking-wider mb-2 md:mb-3 uppercase border border-amber-200 dark:border-amber-800";
       recipeTitleEl.textContent = `${activeMethodData.label} Technique`;
       recipeProfileEl.textContent = activeMethodData.result_type ? `Target: ${activeMethodData.result_type}` : '';
+
+      // Load Grinder Data Badge if it exists in the preset file
+      if (activeMethodData.grinder_name || activeMethodData.grind_size) {
+        const gName = activeMethodData.grinder_name || "Grinder";
+        const gSize = activeMethodData.grind_size ? ` (Size: ${activeMethodData.grind_size})` : "";
+        recipeGrinderTextEl.textContent = `${gName}${gSize}`;
+        recipeGrinderBadgeEl.classList.remove('hidden');
+      } else {
+        recipeGrinderBadgeEl.classList.add('hidden');
+      }
 
       if (activeMethodData.notes) {
         recipeNotesEl.textContent = activeMethodData.notes;

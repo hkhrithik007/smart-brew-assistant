@@ -7,6 +7,8 @@ methods:
   v60:
     label: "Pour Over (V60)"
     ratio: 16.6
+    grinder_name: "Timemore C2s"
+    grind_size: 20
     result_type: "Clean, sweet, and bright cup."
     notes: "Based on the Ultimate 1-Cup V60 method. Use water just off the boil."
     steps:
@@ -30,41 +32,35 @@ methods:
         text: "Give the brewer a final gentle swirl and let it draw down."
   french_press:
     label: "French Press"
-    ratio: 16.6
-    result_type: "Full body, sweet, with absolutely zero sludge."
+    ratio: 15.0
+    grinder_name: "Timemore C2s"
+    grind_size: 24
+    result_type: "Heavy body, rich and textured."
+    notes: "James Hoffmann Ultimate French Press technique. Do not plunge all the way down."
     steps:
       - time: "0:00"
         water: "{{water}}"
-        text: 'Pour all water. Do not put the plunger on yet.'
+        text: "Pour all {{water}}g of water. Wait 4 minutes."
       - time: "4:00"
         water: ""
-        text: 'Take a spoon and gently stir the crust at the top. Most grounds will fall to the bottom.'
-      - time: "4:05"
+        text: "Stir the crust. Scoop off the foam and floating bits. Wait 5 more minutes."
+      - time: "9:00"
         water: ""
-        text: 'Scoop off any remaining foam and floating bits with two spoons and discard.'
-      - time: "4:10"
-        water: ""
-        text: 'Wait patiently. Do absolutely nothing for at least 5 minutes to let the microscopic silt settle.'
-      - time: "9:00+"
-        water: ""
-        text: 'Place the plunger on the surface as a strainer (<strong>do not plunge down</strong>). Pour gently into your cup and serve.'
-  aeropress:
-    label: "AeroPress"
-    ratio: 18.1
-    result_type: "High extraction, strong and clear cup."
+        text: "Plunge just to the surface of the coffee and pour gently."
+  moka_pot:
+    label: "Moka Pot"
+    ratio: 10.0
+    grinder_name: "Timemore C2s"
+    grind_size: 15
+    result_type: "Strong, espresso-like intensity."
+    notes: "Fill base with boiling water. Start on medium-low heat."
     steps:
       - time: "0:00"
-        water: "{{water}}"
-        text: 'Standard orientation (not inverted). Put dry paper in cap, lock it. Pour all water.'
-      - time: "0:15"
         water: ""
-        text: 'Insert the plunger just slightly into the top chamber. This creates a vacuum and stops the coffee from dripping through.'
-      - time: "2:00"
+        text: "Assemble with boiling water in the base and place on medium-low heat."
+      - time: "0:00"
         water: ""
-        text: 'Carefully hold the base and the plunger together, and give the AeroPress a gentle swirl.'
-      - time: "2:30"
+        text: "When coffee starts flowing fast and bubbling lighter, remove from heat."
+      - time: "0:00"
         water: ""
-        text: 'Begin pressing down gently. It should take about 30 seconds to push all the way through.'
-      - time: "3:00"
-        water: ""
-        text: 'Stop pressing when you hear the hiss. Pull back slightly on the plunger to stop drips, and serve.'
+        text: "Run the base under cold water immediately to stop extraction."

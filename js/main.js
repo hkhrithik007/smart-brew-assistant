@@ -422,7 +422,15 @@ function renderBaristaDropdown(selectedId = null) {
   baristaEl.classList.remove("bg-stone-100", "dark:bg-stone-800");
   baristaEl.classList.add("bg-white", "dark:bg-stone-900");
 
-  if (selectedId) baristaEl.value = selectedId;
+  // Prioritize James Hoffmann as the default on launch, or fallback to the requested/first ID
+  if (selectedId && allBaristas.some(b => b.id === selectedId)) {
+    baristaEl.value = selectedId;
+  } else if (allBaristas.some(b => b.id === 'james_hoffmann')) {
+    baristaEl.value = 'james_hoffmann';
+  } else if (allBaristas.length > 0) {
+    baristaEl.value = allBaristas[0].id;
+  }
+
   updateMethodsDropdown();
 }
 

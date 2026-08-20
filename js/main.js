@@ -87,7 +87,7 @@ const EMERGENCY_FALLBACK_DATA = [
           { time: "0:15", water: "", text: "Fill the basket to the top with coffee (do not tamp or compress). Assemble the pot using a towel to protect your hands." },
           { time: "0:30", water: "", text: "Place on the stove over medium heat. Leave the lid open so you can keep an eye on the brew." },
           { time: "2:00", water: "", text: "As soon as coffee starts to bubble up into the top chamber, reduce the stove to low heat." },
-          { time: "3:00", water: "", text: "When you hear the coffee sputtering, close the lid and remove the pot entirely from the heat. Pour immediately." }
+          { time: "3:00", water: "", text: "When hear the coffee sputtering, close the lid and remove the pot entirely from the heat. Pour immediately." }
         ]
       }
     }
@@ -98,6 +98,7 @@ let allBaristas = [];
 let stagedCustomMethods = {};
 let activeShareUrl = '';
 let activeShareConfig = null;
+let currentMode = 'official';
 
 // ==========================================
 // DOM Elements
@@ -136,6 +137,11 @@ const downloadConfigBtn = document.getElementById('download-config-btn');
 const loadConfigFile = document.getElementById('load-config-file');
 const stagedMethodsContainer = document.getElementById('staged-methods-container');
 const stagedMethodsList = document.getElementById('staged-methods-list');
+const baristaContainer = document.getElementById('barista-container');
+
+// Mode Toggle Elements
+const modeOfficialBtn = document.getElementById('mode-official');
+const modeCreateBtn = document.getElementById('mode-create');
 
 // Grinder Badge
 const recipeGrinderBadgeEl = document.getElementById('recipe-grinder-badge');
@@ -179,8 +185,36 @@ function getOptimalTemp(roast, process) {
   const temp = baseRoastTemps[roast] + (fermentationOffsets[process] || 0);
   return Math.max(80, Math.min(100, temp));
 }
-
 const noTempMethods = ['moka_pot', 'cold_brew', 'siphon', 'phin', 'auto_drip'];
+
+// ==========================================
+// MODE TOGGLER (Library System)
+// ==========================================
+function setMode(mode) {
+  currentMode = mode;
+
+  [modeOfficialBtn, modeCreateBtn].forEach(b => {
+    b.className = "flex-1 py-2 text-[10px] md:text-xs font-bold rounded-lg text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 transition-all";
+  });
+
+  if (mode === 'official') {
+    modeOfficialBtn.className = "flex-1 py-2 text-[10px] md:text-xs font-bold rounded-lg bg-white dark:bg-stone-700 shadow-sm text-amber-700 dark:text-amber-400 transition-all";
+    baristaContainer.classList.remove('hidden');
+    methodContainer.classList.remove('hidden');
+    customBuilder.classList.add('hidden');
+
+    renderBaristaDropdown(baristaEl.value);
+
+  } else if (mode === 'create') {
+    modeCreateBtn.className = "flex-1 py-2 text-[10px] md:text-xs font-bold rounded-lg bg-white dark:bg-stone-700 shadow-sm text-teal-700 dark:text-teal-400 transition-all";
+    baristaContainer.classList.add('hidden');
+    methodContainer.classList.add('hidden');
+    customBuilder.classList.remove('hidden');
+  }
+
+  updateMethodsDropdown();
+  calculateRecipe();
+}
 
 // ==========================================
 // CUSTOM SEARCHABLE UI INITIALIZER
@@ -206,28 +240,21 @@ function initSearchableDropdown(wrapperId, groups, defaultVal = null) {
   function populate(filter = "") {
     list.innerHTML = "";
     let hasResults = false;
-
     groups.forEach(g => {
       const matchedItems = g.items.filter(i => i.label.toLowerCase().includes(filter.toLowerCase()));
       if (matchedItems.length > 0) {
         hasResults = true;
-
         if (g.group) {
           const groupLabel = document.createElement('div');
           groupLabel.className = "px-3 pt-3 pb-1 text-[10px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-wider sticky top-0 bg-white dark:bg-stone-800 z-10 shadow-[0_4px_4px_-4px_rgba(0,0,0,0.1)]";
           groupLabel.textContent = g.group;
           list.appendChild(groupLabel);
         }
-
         matchedItems.forEach(item => {
           const opt = document.createElement('div');
           opt.className = "px-3 py-2 mt-1 cursor-pointer text-sm font-medium text-stone-700 dark:text-stone-200 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-700 dark:hover:text-amber-400 rounded-md transition-colors option-item";
           opt.textContent = item.label;
-
-          if (hiddenInput.value === item.id) {
-            opt.classList.add('bg-amber-50', 'dark:bg-amber-900/30', 'text-amber-700', 'dark:text-amber-400');
-          }
-
+          if (hiddenInput.value === item.id) opt.classList.add('bg-amber-50', 'dark:bg-amber-900/30', 'text-amber-700', 'dark:text-amber-400');
           opt.addEventListener('click', (e) => {
             e.stopPropagation();
             hiddenInput.value = item.id;
@@ -239,9 +266,7 @@ function initSearchableDropdown(wrapperId, groups, defaultVal = null) {
         });
       }
     });
-    if (!hasResults) {
-      list.innerHTML = `<div class="px-3 py-4 text-center text-xs text-stone-500 dark:text-stone-400">No options found</div>`;
-    }
+    if (!hasResults) list.innerHTML = `<div class="px-3 py-4 text-center text-xs text-stone-500 dark:text-stone-400">No options found</div>`;
   }
 
   const newToggle = toggle.cloneNode(true);
@@ -252,11 +277,7 @@ function initSearchableDropdown(wrapperId, groups, defaultVal = null) {
   newToggle.addEventListener('click', (e) => {
     e.stopPropagation();
     if (newToggle.disabled) return;
-
-    document.querySelectorAll('.dropdown-menu').forEach(m => {
-      if (m !== menu) m.classList.add('hidden');
-    });
-
+    document.querySelectorAll('.dropdown-menu').forEach(m => { if (m !== menu) m.classList.add('hidden'); });
     menu.classList.toggle('hidden');
     if (!menu.classList.contains('hidden')) {
       newSearch.value = "";
@@ -318,20 +339,18 @@ async function initializeApp() {
       }));
     }
 
-    if (allBaristas.length === 0) {
-      allBaristas = [...EMERGENCY_FALLBACK_DATA];
-    }
+    if (allBaristas.length === 0) allBaristas = [...EMERGENCY_FALLBACK_DATA];
 
     initSearchableDropdown('fermentation-wrapper', FERMENTATION_PROCESSES, 'washed');
     initSearchableDropdown('custom-brew-method-wrapper', CUSTOM_BREW_METHODS, 'v60');
 
-    checkUrlForSharedRecipe();
-
-    renderBaristaDropdown();
     setupEventListeners();
     addCustomStepRow();
-    applyConfigDefaults();
-    calculateRecipe();
+    checkUrlForSharedRecipe();
+
+    if (window.location.search.indexOf('r=') === -1) {
+      setMode('official');
+    }
 
   } catch (error) {
     console.error(error);
@@ -341,7 +360,7 @@ async function initializeApp() {
 }
 
 // ==========================================
-// URL Shared Recipe Importer
+// URL Shared Recipe Importer (QR Scans)
 // ==========================================
 function checkUrlForSharedRecipe() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -358,10 +377,12 @@ function checkUrlForSharedRecipe() {
           else allBaristas.unshift(sharedConfig);
 
           setTimeout(() => {
+            setMode('official');
             baristaEl.value = sharedConfig.id;
             updateMethodsDropdown();
             applyConfigDefaults();
             calculateRecipe();
+            window.history.replaceState({}, document.title, window.location.pathname);
           }, 100);
         }
       }
@@ -372,7 +393,7 @@ function checkUrlForSharedRecipe() {
 }
 
 // ==========================================
-// Dark Mode
+// Dark Mode & Listeners
 // ==========================================
 function setupDarkMode() {
   if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -382,11 +403,9 @@ function setupDarkMode() {
     document.documentElement.classList.remove('dark');
     themeToggleDarkIcon.classList.remove('hidden');
   }
-
   themeToggleBtn.addEventListener('click', function () {
     themeToggleDarkIcon.classList.toggle('hidden');
     themeToggleLightIcon.classList.toggle('hidden');
-
     if (document.documentElement.classList.contains('dark')) {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('color-theme', 'light');
@@ -398,10 +417,7 @@ function setupDarkMode() {
 }
 
 function renderBaristaDropdown(selectedId = null) {
-  let dropdownHTML = allBaristas.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
-  dropdownHTML += `<option value="custom">🛠 Create Custom Recipe</option>`;
-
-  baristaEl.innerHTML = dropdownHTML;
+  baristaEl.innerHTML = allBaristas.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
   baristaEl.disabled = false;
   baristaEl.classList.remove("bg-stone-100", "dark:bg-stone-800");
   baristaEl.classList.add("bg-white", "dark:bg-stone-900");
@@ -411,6 +427,9 @@ function renderBaristaDropdown(selectedId = null) {
 }
 
 function setupEventListeners() {
+  modeOfficialBtn.addEventListener('click', () => setMode('official'));
+  modeCreateBtn.addEventListener('click', () => setMode('create'));
+
   baristaEl.addEventListener('change', () => {
     applyConfigDefaults();
     updateMethodsDropdown();
@@ -421,9 +440,24 @@ function setupEventListeners() {
     applyConfigDefaults();
     calculateRecipe();
   });
+
   roastEl.addEventListener('change', calculateRecipe);
   fermentationEl.addEventListener('change', calculateRecipe);
-  customBrewMethodEl.addEventListener('change', calculateRecipe);
+
+  customBrewMethodEl.addEventListener('change', () => {
+    const methodId = customBrewMethodEl.value;
+    if (stagedCustomMethods[methodId]) {
+      customStepsContainer.innerHTML = '';
+      stagedCustomMethods[methodId].steps.forEach(step => {
+        let [m, s] = String(step.time).split(':');
+        addCustomStepRow(m, s, step.water, step.text);
+      });
+    } else {
+      customStepsContainer.innerHTML = '';
+      addCustomStepRow();
+    }
+    calculateRecipe();
+  });
 
   weightEl.addEventListener('input', calculateRecipe);
   ratioEl.addEventListener('input', calculateRecipe);
@@ -439,14 +473,12 @@ function setupEventListeners() {
   downloadConfigBtn.addEventListener('click', downloadCustomConfig);
   loadConfigFile.addEventListener('change', handleFileUpload);
 
-  // QR Modal Triggers
   shareQrBtn.addEventListener('click', () => triggerQrModal(true));
   quickShareQrBtn.addEventListener('click', () => triggerQrModal(false));
   closeQrModalBtn.addEventListener('click', hideQrModal);
   downloadQrCardBtn.addEventListener('click', downloadBrandedQrCard);
   copyQrLinkBtn.addEventListener('click', copyDirectLink);
 
-  // Timeline Preview Modal
   if (previewTimelineBtn) {
     previewTimelineBtn.addEventListener('click', () => {
       modalContentArea.innerHTML = `
@@ -475,38 +507,33 @@ function setupEventListeners() {
 }
 
 function applyConfigDefaults() {
-  const isCustom = baristaEl.value === 'custom';
-  if (!isCustom) {
-    const activeBarista = allBaristas.find(b => b.id === baristaEl.value);
-    if (activeBarista) {
-      if (activeBarista.default_roast) roastEl.value = activeBarista.default_roast;
-      if (activeBarista.default_process) {
-        fermentationEl.value = activeBarista.default_process;
+  if (currentMode === 'create') return;
+  const activeBarista = allBaristas.find(b => b.id === baristaEl.value);
 
-        const wrapper = document.getElementById('fermentation-wrapper');
-        const textSpan = wrapper.querySelector('.selected-text');
-        let foundLabel = activeBarista.default_process;
-        FERMENTATION_PROCESSES.forEach(g => g.items.forEach(i => { if (i.id === activeBarista.default_process) foundLabel = i.label; }));
-        textSpan.textContent = foundLabel;
-      }
-      if (activeBarista.default_dose) weightEl.value = activeBarista.default_dose;
+  if (activeBarista) {
+    if (activeBarista.default_roast) roastEl.value = activeBarista.default_roast;
+    if (activeBarista.default_process) {
+      fermentationEl.value = activeBarista.default_process;
+      const wrapper = document.getElementById('fermentation-wrapper');
+      const textSpan = wrapper.querySelector('.selected-text');
+      let foundLabel = activeBarista.default_process;
+      FERMENTATION_PROCESSES.forEach(g => g.items.forEach(i => { if (i.id === activeBarista.default_process) foundLabel = i.label; }));
+      textSpan.textContent = foundLabel;
     }
+    if (activeBarista.default_dose) weightEl.value = activeBarista.default_dose;
   }
 }
 
 function updateMethodsDropdown() {
   const methodBtn = document.getElementById('method-btn');
-
-  if (baristaEl.value === 'custom') {
+  if (currentMode === 'create') {
     methodContainer.classList.add('hidden');
-    customBuilder.classList.remove('hidden');
     ratioEl.disabled = false;
     ratioLockIcon.classList.add('hidden');
     return;
   }
 
   methodContainer.classList.remove('hidden');
-  customBuilder.classList.add('hidden');
   ratioEl.disabled = true;
   ratioLockIcon.classList.remove('hidden');
 
@@ -514,20 +541,15 @@ function updateMethodsDropdown() {
 
   if (selectedBarista && selectedBarista.methods) {
     methodBtn.disabled = false;
-
     const dynamicMethods = [{
       group: "Available Recipes",
-      items: Object.keys(selectedBarista.methods).map(k => ({
-        id: k,
-        label: selectedBarista.methods[k].label
-      }))
+      items: Object.keys(selectedBarista.methods).map(k => ({ id: k, label: selectedBarista.methods[k].label }))
     }];
 
     let currentVal = methodEl.value;
     if (!Object.keys(selectedBarista.methods).includes(currentVal)) {
       currentVal = Object.keys(selectedBarista.methods)[0];
     }
-
     initSearchableDropdown('method-wrapper', dynamicMethods, currentVal);
   } else {
     methodBtn.disabled = true;
@@ -535,7 +557,7 @@ function updateMethodsDropdown() {
 }
 
 // ==========================================
-// Staging System
+// Staging & Custom Config Builder
 // ==========================================
 function stageCurrentMethod() {
   const methodId = customBrewMethodEl.value;
@@ -562,12 +584,15 @@ function stageCurrentMethod() {
   };
 
   renderStagedMethods();
-  customProfileEl.value = '';
-  customNotesEl.value = '';
-  customGrinderNameEl.value = '';
-  customGrinderSizeEl.value = '';
-  customStepsContainer.innerHTML = '';
-  addCustomStepRow();
+
+  const originalText = stageMethodBtn.innerHTML;
+  stageMethodBtn.innerHTML = "✓ Method Saved";
+  stageMethodBtn.classList.add('bg-teal-200', 'dark:bg-teal-800');
+  setTimeout(() => {
+    stageMethodBtn.innerHTML = originalText;
+    stageMethodBtn.classList.remove('bg-teal-200', 'dark:bg-teal-800');
+  }, 2000);
+
   calculateRecipe();
 }
 
@@ -591,30 +616,55 @@ window.removeStagedMethod = function (id) {
   renderStagedMethods();
 }
 
-function addCustomStepRow() {
+function addCustomStepRow(m = "0", s = "00", waterStr = "", textStr = "") {
   const div = document.createElement('div');
   div.className = 'flex flex-col gap-2 step-row bg-white dark:bg-stone-800 p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm';
+
+  if (!s && m && m.includes(':')) { let split = m.split(':'); m = split[0]; s = split[1]; }
 
   div.innerHTML = `
     <div class="flex gap-2 items-center w-full">
       <div class="flex items-center justify-center bg-stone-100 dark:bg-stone-900 rounded-md py-1 px-1 w-[4.5rem] shrink-0 shadow-inner">
-        <input type="number" inputmode="numeric" class="custom-step-min w-6 bg-transparent text-stone-700 dark:text-stone-300 text-center text-sm font-bold focus:outline-none" placeholder="0" min="0" max="15" value="0" />
+        <input type="number" inputmode="numeric" class="custom-step-min w-6 bg-transparent text-stone-700 dark:text-stone-300 text-center text-sm font-bold focus:outline-none" placeholder="0" min="0" max="15" value="${parseInt(m) || 0}" />
         <span class="text-stone-400 font-black text-xs">:</span>
-        <input type="number" inputmode="numeric" class="custom-step-sec w-6 bg-transparent text-stone-700 dark:text-stone-300 text-center text-sm font-bold focus:outline-none" placeholder="00" min="0" max="59" value="00" />
+        <input type="number" inputmode="numeric" class="custom-step-sec w-6 bg-transparent text-stone-700 dark:text-stone-300 text-center text-sm font-bold focus:outline-none" placeholder="00" min="0" max="59" value="${(parseInt(s) || 0).toString().padStart(2, '0')}" />
       </div>
       <div class="flex items-center bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 rounded-md shrink-0 px-2 h-full">
-        <input type="text" class="custom-step-water w-12 bg-transparent text-amber-700 dark:text-amber-400 py-1 focus:outline-none text-xs font-bold text-center" placeholder="water" />
+        <input type="text" class="custom-step-water w-12 bg-transparent text-amber-700 dark:text-amber-400 py-1 focus:outline-none text-xs font-bold text-center" placeholder="water" value="${waterStr}" />
         <span class="text-amber-500 text-[10px] font-bold">g</span>
       </div>
       <button class="remove-step text-stone-300 dark:text-stone-600 hover:text-red-500 font-bold ml-auto px-2 text-xl leading-none">&times;</button>
     </div>
-    <input type="text" class="custom-step-text w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 py-1.5 px-3 rounded-md focus:ring-2 focus:ring-amber-600 text-sm" placeholder="Instruction text..." />
+    <input type="text" class="custom-step-text w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 py-1.5 px-3 rounded-md focus:ring-2 focus:ring-amber-600 text-sm" placeholder="Instruction text..." value="${textStr}" />
   `;
 
+  const minInput = div.querySelector('.custom-step-min');
   const secInput = div.querySelector('.custom-step-sec');
-  secInput.addEventListener('blur', (e) => {
-    if (e.target.value.length === 1) e.target.value = '0' + e.target.value;
+
+  // --- NEW SMART FOCUS UX --- //
+
+  // Auto-clear minute input if it's "0" when clicked
+  minInput.addEventListener('focus', (e) => {
+    if (e.target.value === '0') e.target.value = '';
+    e.target.select();
   });
+  // Put the "0" back if they leave it completely blank
+  minInput.addEventListener('blur', (e) => {
+    if (e.target.value === '') e.target.value = '0';
+  });
+
+  // Auto-clear second input if it's "00" when clicked
+  secInput.addEventListener('focus', (e) => {
+    if (e.target.value === '00' || e.target.value === '0') e.target.value = '';
+    e.target.select();
+  });
+  // Pad the seconds with a zero if needed when clicking away
+  secInput.addEventListener('blur', (e) => {
+    if (e.target.value === '') e.target.value = '00';
+    else if (e.target.value.length === 1) e.target.value = '0' + e.target.value;
+  });
+
+  // -------------------------- //
 
   div.querySelectorAll('input').forEach(inp => inp.addEventListener('input', calculateRecipe));
   div.querySelector('.remove-step').addEventListener('click', (e) => {
@@ -626,18 +676,16 @@ function addCustomStepRow() {
 }
 
 // ==========================================
-// FIX 1 & 2: Ultra-Crisp Scannable QR Payload
+// QR Code & Card Generation Logic
 // ==========================================
 function triggerQrModal(fromCustomBuilder = false) {
-  let configToShare = null;
   let activeConfigObj = null;
 
-  if (fromCustomBuilder || baristaEl.value === 'custom') {
+  if (fromCustomBuilder || currentMode === 'create') {
     const configName = customNameEl.value || 'Custom Coffee Brew';
     const hasUnsavedSteps = document.querySelectorAll('.step-row').length > 0 && document.querySelector('.custom-step-text').value !== '';
-    if (Object.keys(stagedCustomMethods).length === 0 || hasUnsavedSteps) {
-      stageCurrentMethod();
-    }
+    if (Object.keys(stagedCustomMethods).length === 0 || hasUnsavedSteps) stageCurrentMethod();
+
     activeConfigObj = {
       id: configName.toLowerCase().replace(/[^a-z0-9]/g, '_'),
       name: configName,
@@ -652,10 +700,9 @@ function triggerQrModal(fromCustomBuilder = false) {
 
   if (!activeConfigObj) return;
 
-  // FIX: Only pack the currently selected method to keep the URL extremely short and scannable!
-  const activeMethodId = baristaEl.value === 'custom' ? customBrewMethodEl.value : methodEl.value;
+  const activeMethodId = currentMode === 'create' ? customBrewMethodEl.value : methodEl.value;
   const singleMethod = {};
-  if (activeConfigObj.methods[activeMethodId]) {
+  if (activeConfigObj.methods && activeConfigObj.methods[activeMethodId]) {
     singleMethod[activeMethodId] = activeConfigObj.methods[activeMethodId];
   }
 
@@ -677,15 +724,12 @@ function triggerQrModal(fromCustomBuilder = false) {
   const methodData = activeShareConfig.methods[activeMethodId];
   qrModalSubtitle.textContent = methodData ? `${methodData.label} • Ratio 1:${methodData.ratio}` : 'Ready to Brew';
 
-  // Generate Ultra-HD 512x512 QR Code
   qrcodeTarget.innerHTML = '';
   new QRCode(qrcodeTarget, {
     text: activeShareUrl,
-    width: 512,
-    height: 512,
-    colorDark: "#1c1917",
-    colorLight: "#ffffff",
-    correctLevel: QRCode.CorrectLevel.L // Low density makes it scan incredibly fast
+    width: 512, height: 512,
+    colorDark: "#1c1917", colorLight: "#ffffff",
+    correctLevel: QRCode.CorrectLevel.L
   });
 
   qrModal.classList.remove('hidden');
@@ -698,9 +742,7 @@ function triggerQrModal(fromCustomBuilder = false) {
 function hideQrModal() {
   qrModal.classList.add('opacity-0');
   qrModal.querySelector('div').classList.add('scale-95');
-  setTimeout(() => {
-    qrModal.classList.add('hidden');
-  }, 300);
+  setTimeout(() => { qrModal.classList.add('hidden'); }, 300);
 }
 
 function copyDirectLink() {
@@ -710,42 +752,28 @@ function copyDirectLink() {
   });
 }
 
-// ==========================================
-// FIX 3: Safe Mobile Download logic
-// ==========================================
 function downloadBrandedQrCard() {
   if (!activeShareConfig) return;
 
   const canvas = qrExportCanvas;
   const ctx = canvas.getContext('2d');
 
-  canvas.width = 800;
-  canvas.height = 1050;
+  canvas.width = 800; canvas.height = 1050;
 
   const bgGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  bgGrad.addColorStop(0, '#1c1917');
-  bgGrad.addColorStop(1, '#0c0a09');
-  ctx.fillStyle = bgGrad;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  bgGrad.addColorStop(0, '#1c1917'); bgGrad.addColorStop(1, '#0c0a09');
+  ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  ctx.strokeStyle = '#d97706';
-  ctx.lineWidth = 8;
+  ctx.strokeStyle = '#d97706'; ctx.lineWidth = 8;
   ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
 
-  ctx.fillStyle = '#f59e0b';
-  ctx.font = 'bold 30px sans-serif';
-  ctx.textAlign = 'center';
+  ctx.fillStyle = '#f59e0b'; ctx.font = 'bold 30px sans-serif'; ctx.textAlign = 'center';
   ctx.fillText('SMART BREW ASSISTANT', canvas.width / 2, 90);
 
-  ctx.strokeStyle = '#292524';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(80, 120);
-  ctx.lineTo(canvas.width - 80, 120);
-  ctx.stroke();
+  ctx.strokeStyle = '#292524'; ctx.lineWidth = 2; ctx.beginPath();
+  ctx.moveTo(80, 120); ctx.lineTo(canvas.width - 80, 120); ctx.stroke();
 
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 44px sans-serif';
+  ctx.fillStyle = '#ffffff'; ctx.font = 'bold 44px sans-serif';
   ctx.fillText(activeShareConfig.name, canvas.width / 2, 190);
 
   const firstMethodKey = Object.keys(activeShareConfig.methods)[0];
@@ -753,48 +781,31 @@ function downloadBrandedQrCard() {
   const methodLabel = methodData?.label || 'Custom Brew';
   const grinderInfo = methodData?.grinder_name ? `${methodData.grinder_name} (Size: ${methodData.grind_size || 'Dialed'})` : 'Dialed Precision';
 
-  ctx.fillStyle = '#a8a29e';
-  ctx.font = '24px sans-serif';
+  ctx.fillStyle = '#a8a29e'; ctx.font = '24px sans-serif';
   ctx.fillText(`${methodLabel} • 1:${methodData?.ratio || 16}`, canvas.width / 2, 240);
   ctx.fillText(`Grinder: ${grinderInfo}`, canvas.width / 2, 280);
 
-  const qrBoxSize = 420;
-  const qrX = (canvas.width - qrBoxSize) / 2;
-  const qrY = 330;
+  const qrBoxSize = 420; const qrX = (canvas.width - qrBoxSize) / 2; const qrY = 330;
+  ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.roundRect(qrX, qrY, qrBoxSize, qrBoxSize, [24]); ctx.fill();
 
-  ctx.fillStyle = '#ffffff';
-  ctx.beginPath();
-  ctx.roundRect(qrX, qrY, qrBoxSize, qrBoxSize, [24]);
-  ctx.fill();
-
-  // Safely grab the generated QR data URL from the DOM
   const qrCanvas = qrcodeTarget.querySelector('canvas');
   const qrImg = qrcodeTarget.querySelector('img');
   let qrDataUrl = '';
 
-  if (qrCanvas && qrCanvas.width > 0) {
-    qrDataUrl = qrCanvas.toDataURL('image/png');
-  } else if (qrImg && qrImg.src) {
-    qrDataUrl = qrImg.src;
-  }
+  if (qrCanvas && qrCanvas.width > 0) qrDataUrl = qrCanvas.toDataURL('image/png');
+  else if (qrImg && qrImg.src) qrDataUrl = qrImg.src;
 
   if (!qrDataUrl) {
     alert("Please wait a second for the QR code to finish generating before downloading.");
     return;
   }
 
-  // Create a new memory image and WAIT for it to load before drawing to canvas.
-  // This completely fixes the "blank white box" issue on mobile devices.
   const safeImg = new Image();
   safeImg.onload = function () {
     ctx.drawImage(safeImg, qrX + 30, qrY + 30, qrBoxSize - 60, qrBoxSize - 60);
-
-    ctx.fillStyle = '#fbbf24';
-    ctx.font = 'bold 24px sans-serif';
+    ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 24px sans-serif';
     ctx.fillText('Scan with Camera to Brew Live', canvas.width / 2, 820);
-
-    ctx.fillStyle = '#78716c';
-    ctx.font = 'bold 20px sans-serif';
+    ctx.fillStyle = '#78716c'; ctx.font = 'bold 20px sans-serif';
     ctx.fillText('© 2026 Smart Brew Assistant™ • Crafted by Hritik Sharma', canvas.width / 2, 940);
     ctx.font = '16px sans-serif';
     ctx.fillText('https://hkhrithik007.github.io/smart-brew-assistant/', canvas.width / 2, 975);
@@ -813,44 +824,36 @@ function downloadBrandedQrCard() {
 function downloadCustomConfig() {
   const configName = customNameEl.value || 'My Custom Config';
   const hasUnsavedSteps = document.querySelectorAll('.step-row').length > 0 && document.querySelector('.custom-step-text').value !== '';
-  if (Object.keys(stagedCustomMethods).length === 0 || hasUnsavedSteps) {
-    stageCurrentMethod();
-  }
+  if (Object.keys(stagedCustomMethods).length === 0 || hasUnsavedSteps) stageCurrentMethod();
 
   const yamlObj = {
     id: configName.toLowerCase().replace(/[^a-z0-9]/g, '_'),
-    name: configName,
-    default_roast: roastEl.value,
-    default_process: fermentationEl.value,
-    default_dose: parseFloat(weightEl.value),
+    name: configName, default_roast: roastEl.value, default_process: fermentationEl.value, default_dose: parseFloat(weightEl.value),
     methods: stagedCustomMethods
   };
 
   const yamlStr = jsyaml.dump(yamlObj);
   const blob = new Blob([yamlStr], { type: 'text/yaml' });
   const url = URL.createObjectURL(blob);
-
   const a = document.createElement('a');
-  a.href = url;
-  a.download = `${yamlObj.id}.yaml`;
-  a.click();
-  URL.revokeObjectURL(url);
+  a.href = url; a.download = `${yamlObj.id}.yaml`; a.click(); URL.revokeObjectURL(url);
 }
 
 function handleFileUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
-
   const reader = new FileReader();
   reader.onload = (evt) => {
     try {
       const config = jsyaml.load(evt.target.result);
       if (config && config.id && config.methods) {
-        const existingIndex = allBaristas.findIndex(b => b.id === config.id);
-        if (existingIndex > -1) allBaristas[existingIndex] = config;
-        else allBaristas.push(config);
+        const existingIdx = allBaristas.findIndex(b => b.id === config.id);
+        if (existingIdx > -1) allBaristas[existingIdx] = config;
+        else allBaristas.unshift(config);
 
-        renderBaristaDropdown(config.id);
+        setMode('official');
+        baristaEl.value = config.id;
+        updateMethodsDropdown();
         applyConfigDefaults();
         calculateRecipe();
       } else {
@@ -865,13 +868,23 @@ function handleFileUpload(e) {
 // ==========================================
 // Calculation & Steps Rendering
 // ==========================================
+function formatTime(val) {
+  if (typeof val === 'number') {
+    const m = Math.floor(val / 60);
+    const s = (val % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+  return String(val || '0:00');
+}
+
 function buildTimelineStep(time, water, instruction) {
+  const displayTime = formatTime(time);
   const waterBadge = water ? `<span class="ml-2 text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/50 border border-amber-200 dark:border-amber-700/50 px-2 py-0.5 rounded-full">${water}g</span>` : '';
   return `
     <div class="relative pl-6 md:pl-7">
         <div class="absolute w-3.5 h-3.5 bg-amber-600 rounded-full -left-[8px] top-1.5 ring-4 ring-white dark:ring-stone-900 shadow-sm transition-colors duration-300"></div>
         <div class="flex items-center mb-1">
-          <div class="text-sm font-black text-amber-700 dark:text-amber-500 tracking-wide">${time}</div>
+          <div class="text-sm font-black text-amber-700 dark:text-amber-500 tracking-wide">${displayTime}</div>
           ${waterBadge}
         </div>
         <div class="text-stone-600 dark:text-stone-300 leading-relaxed text-sm md:text-base">${instruction}</div>
@@ -880,9 +893,11 @@ function buildTimelineStep(time, water, instruction) {
 }
 
 function parseYamlTemplate(text, water) {
-  if (!text) return '';
-  const chunk = Math.round(water / 5);
-  return text.replaceAll('{{water}}', water)
+  if (text === undefined || text === null) return '';
+  const strText = String(text);
+  const w = Number(water) || 0;
+  const chunk = Math.round(w / 5);
+  return strText.replaceAll('{{water}}', w)
     .replaceAll('{{chunk_1}}', chunk)
     .replaceAll('{{chunk_2}}', chunk * 2)
     .replaceAll('{{chunk_3}}', chunk * 3)
@@ -891,15 +906,13 @@ function parseYamlTemplate(text, water) {
 
 function calculateRecipe() {
   const weight = parseFloat(weightEl.value) || 0;
-  const isCustom = baristaEl.value === 'custom';
-
   let activeRatio = 17;
   let activeMethodId = '';
 
-  if (!isCustom) {
+  if (currentMode === 'official') {
     const activeBarista = allBaristas.find(b => b.id === baristaEl.value);
     activeMethodId = methodEl.value;
-    const activeMethodData = activeBarista?.methods[activeMethodId];
+    const activeMethodData = activeBarista?.methods?.[activeMethodId];
     if (activeMethodData) {
       activeRatio = activeMethodData.ratio || 16.6;
       ratioEl.value = activeRatio;
@@ -922,9 +935,9 @@ function calculateRecipe() {
   targetWaterEl.textContent = totalWater;
   targetTempEl.textContent = getOptimalTemp(roastEl.value, fermentationEl.value);
 
-  if (isCustom) {
+  if (currentMode === 'create') {
     creatorBadgeEl.textContent = `Custom Workspace`;
-    creatorBadgeEl.className = "inline-block py-1 px-3 rounded-full bg-teal-100 dark:bg-teal-900/40 text-teal-800 dark:text-teal-300 text-[10px] md:text-xs font-bold tracking-wider mb-2 md:mb-3 uppercase border border-teal-200 dark:border-teal-800";
+    creatorBadgeEl.className = "inline-block py-1 px-3 rounded-full bg-teal-100 dark:bg-teal-900/40 text-teal-800 dark:text-teal-300 text-[10px] md:text-xs font-bold tracking-wider mb-2 uppercase border border-teal-200 dark:border-teal-800";
     recipeTitleEl.textContent = customNameEl.value || 'Untitled Brew Method';
     recipeProfileEl.textContent = customProfileEl.value ? `Target: ${customProfileEl.value}` : '';
 
@@ -933,16 +946,12 @@ function calculateRecipe() {
       const gSize = customGrinderSizeEl.value ? ` (Size: ${customGrinderSizeEl.value})` : "";
       recipeGrinderTextEl.textContent = `${gName}${gSize}`;
       recipeGrinderBadgeEl.classList.remove('hidden');
-    } else {
-      recipeGrinderBadgeEl.classList.add('hidden');
-    }
+    } else { recipeGrinderBadgeEl.classList.add('hidden'); }
 
     if (customNotesEl.value) {
       recipeNotesEl.textContent = customNotesEl.value;
       recipeNotesEl.classList.remove('hidden');
-    } else {
-      recipeNotesEl.classList.add('hidden');
-    }
+    } else { recipeNotesEl.classList.add('hidden'); }
 
     const customSteps = Array.from(document.querySelectorAll('.step-row')).map(row => {
       const min = row.querySelector('.custom-step-min').value || '0';
@@ -955,16 +964,16 @@ function calculateRecipe() {
     });
 
     recipeStepsEl.innerHTML = customSteps.map(step =>
-      buildTimelineStep(step.time, parseYamlTemplate(step.water, totalWater), parseYamlTemplate(step.text, totalWater))
+      buildTimelineStep(step.time, step.water ? parseYamlTemplate(step.water, totalWater) : '', parseYamlTemplate(step.text, totalWater))
     ).join('');
 
   } else {
     const activeBarista = allBaristas.find(b => b.id === baristaEl.value);
-    const activeMethodData = activeBarista?.methods[methodEl.value];
+    const activeMethodData = activeBarista?.methods?.[methodEl.value];
 
     if (activeBarista && activeMethodData) {
       creatorBadgeEl.textContent = `${activeBarista.name} Config`;
-      creatorBadgeEl.className = "inline-block py-1 px-3 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 text-[10px] md:text-xs font-bold tracking-wider mb-2 md:mb-3 uppercase border border-amber-200 dark:border-amber-800";
+      creatorBadgeEl.className = "inline-block py-1 px-3 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 text-[10px] md:text-xs font-bold tracking-wider mb-2 uppercase border border-amber-200 dark:border-amber-800";
       recipeTitleEl.textContent = `${activeMethodData.label} Technique`;
       recipeProfileEl.textContent = activeMethodData.result_type ? `Target: ${activeMethodData.result_type}` : '';
 
@@ -973,20 +982,21 @@ function calculateRecipe() {
         const gSize = activeMethodData.grind_size ? ` (Size: ${activeMethodData.grind_size})` : "";
         recipeGrinderTextEl.textContent = `${gName}${gSize}`;
         recipeGrinderBadgeEl.classList.remove('hidden');
-      } else {
-        recipeGrinderBadgeEl.classList.add('hidden');
-      }
+      } else { recipeGrinderBadgeEl.classList.add('hidden'); }
 
       if (activeMethodData.notes) {
         recipeNotesEl.textContent = activeMethodData.notes;
         recipeNotesEl.classList.remove('hidden');
-      } else {
-        recipeNotesEl.classList.add('hidden');
-      }
+      } else { recipeNotesEl.classList.add('hidden'); }
 
       recipeStepsEl.innerHTML = activeMethodData.steps.map(step =>
-        buildTimelineStep(step.time, parseYamlTemplate(String(step.water || ''), totalWater), parseYamlTemplate(step.text, totalWater))
+        buildTimelineStep(step.time, (step.water !== undefined && step.water !== null && step.water !== "") ? parseYamlTemplate(step.water, totalWater) : '', parseYamlTemplate(step.text, totalWater))
       ).join('');
+    } else {
+      recipeStepsEl.innerHTML = '';
+      recipeTitleEl.textContent = "No Recipe Found";
+      recipeProfileEl.textContent = "";
+      recipeGrinderBadgeEl.classList.add('hidden');
     }
   }
 }

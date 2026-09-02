@@ -1,0 +1,32 @@
+id: tetsu_kasuya
+name: Tetsu Kasuya
+default_roast: light
+default_process: washed
+default_dose: 20
+methods:
+  v60:
+    label: "4:6 Method (V60)"
+    ratio: 15.0
+    grinder_name: "Timemore C2s"
+    grind_size: 25
+    result_type: "High clarity, balanced sweetness and acidity."
+    notes: "World Brewers Cup 2016 Champion recipe. Uses a very coarse (French Press) grind. The first 40% of water controls flavor balance. The final 60% controls strength. Allow the water to fully drain between each pour."
+    steps:
+      - time: "0:00"
+        water: "{{chunk_1}}"
+        text: "Pour to {{chunk_1}}g for the bloom. Let it sit."
+      - time: "0:45"
+        water: "{{chunk_2}}"
+        text: "Pour to {{chunk_2}}g. This completes the 40% flavor phase."
+      - time: "1:30"
+        water: "{{chunk_3}}"
+        text: "Pour to {{chunk_3}}g. (Wait for the water to drain through the bed completely)."
+      - time: "2:15"
+        water: "{{chunk_4}}"
+        text: "Pour to {{chunk_4}}g."
+      - time: "3:00"
+        water: "{{water}}"
+        text: "Pour the final amount up to {{water}}g."
+      - time: "3:30"
+        water: ""
+        text: "Drawdown completes. Remove the dripper and serve!"

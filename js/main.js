@@ -2,10 +2,34 @@
 // DATA: FERMENTATION PROCESSES (Grouped & Searchable)
 // ==========================================
 const FERMENTATION_PROCESSES = [
-  { group: "Washed / Wet", items: [{ id: "washed", label: "Washed" }, { id: "double_washed", label: "Double Washed" }] },
-  { group: "Natural / Dry", items: [{ id: "natural", label: "Natural" }, { id: "fruit_maceration", label: "Fruit Maceration" }] },
-  { group: "Honey Process", items: [{ id: "white_honey", label: "White Honey" }, { id: "yellow_honey", label: "Yellow Honey" }, { id: "red_honey", label: "Red Honey" }, { id: "black_honey", label: "Black/Dark Honey" }] },
-  { group: "Experimental / Anaerobic", items: [{ id: "anaerobic_washed", label: "Anaerobic Washed" }, { id: "anaerobic_natural", label: "Anaerobic Natural" }, { id: "carbonic_maceration", label: "Carbonic Maceration" }, { id: "thermal_shock", label: "Thermal Shock" }] }
+  {
+    group: "Traditional Processing", items: [
+      { id: "washed", label: "Washed / Traditional Washed" },
+      { id: "natural", label: "Natural / Dry Process" },
+      { id: "honey", label: "Honey / Pulped Natural" }
+    ]
+  },
+  {
+    group: "Anaerobic & CM", items: [
+      { id: "anaerobic_washed", label: "Anaerobic Washed" },
+      { id: "anaerobic_natural", label: "Anaerobic Natural" },
+      { id: "carbonic_maceration", label: "Carbonic Maceration (CM)" }
+    ]
+  },
+  {
+    group: "Biological Fermentation", items: [
+      { id: "lactic", label: "Lactic Fermentation" },
+      { id: "yeast_inoculated", label: "Yeast-Inoculated" },
+      { id: "extended", label: "Extended Fermentation" }
+    ]
+  },
+  {
+    group: "Advanced & Infused", items: [
+      { id: "double_fermentation", label: "Double Fermentation / Multi-Stage" },
+      { id: "thermal_shock", label: "Thermal Shock" },
+      { id: "co_fermented", label: "Co-Fermented / Infused" }
+    ]
+  }
 ];
 
 // ==========================================
@@ -23,7 +47,7 @@ const CUSTOM_BREW_METHODS = [
 // PARALLEL CONFIG LOADER (Optimized)
 // ==========================================
 const GITHUB_API_URL = 'https://api.github.com/repos/hkhrithik007/smart-brew-assistant/contents/barista';
-const LOCAL_INDEX_URL = '../barista/index.json';
+const LOCAL_INDEX_URL = 'barista/index.json';
 
 const EMERGENCY_FALLBACK_DATA = [
   {
@@ -122,7 +146,6 @@ const recipeNotesEl = document.getElementById('recipe-notes');
 const metricsContainer = document.getElementById('metrics-container');
 const tempCardEl = document.getElementById('temp-card');
 
-// Custom Builder Elements
 const customBuilder = document.getElementById('custom-builder');
 const customNameEl = document.getElementById('custom-name');
 const customBrewMethodEl = document.getElementById('custom-brew-method');
@@ -138,21 +161,15 @@ const stagedMethodsContainer = document.getElementById('staged-methods-container
 const stagedMethodsList = document.getElementById('staged-methods-list');
 const baristaContainer = document.getElementById('barista-container');
 
-// Load Menus
 const importMenuBtn = document.getElementById('import-menu-btn');
 const importMenuDropdown = document.getElementById('import-menu-dropdown');
 const loadConfigFile = document.getElementById('load-config-file');
 const loadQrFile = document.getElementById('load-qr-file');
 
-// Mode Toggle Elements
 const modeOfficialBtn = document.getElementById('mode-official');
 const modeCreateBtn = document.getElementById('mode-create');
-
-// Grinder Badge
 const recipeGrinderBadgeEl = document.getElementById('recipe-grinder-badge');
 const recipeGrinderTextEl = document.getElementById('recipe-grinder-text');
-
-// Theme & Modals
 const themeToggleBtn = document.getElementById('theme-toggle');
 const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
 const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
@@ -173,23 +190,43 @@ const copyBtnText = document.getElementById('copy-btn-text');
 const qrExportCanvas = document.getElementById('qr-export-canvas');
 
 // ==========================================
-// Temperature Logic
+// Temperature Logic (2D Matrix Sync)
 // ==========================================
-const baseRoastTemps = {
-  'very_light': 97, 'light': 95, 'medium_light': 93, 'medium': 91, 'medium_dark': 89, 'dark': 86, 'very_dark': 82
-};
-const fermentationOffsets = {
-  'washed': 0, 'double_washed': 0,
-  'yellow_honey': -1, 'white_honey': 0, 'red_honey': -1, 'black_honey': -2,
-  'natural': -2, 'fruit_maceration': -2,
-  'anaerobic_washed': -2, 'anaerobic_natural': -3,
-  'carbonic_maceration': -4, 'thermal_shock': -3
+const TEMP_MATRIX = {
+  'washed': { 'very_light': '98–100', 'light': '96–98', 'medium_light': '94–96', 'medium': '92–94', 'medium_dark': '90–92', 'dark': '88–90', 'very_dark': '85–88' },
+  'natural': { 'very_light': '96–98', 'light': '94–96', 'medium_light': '92–94', 'medium': '90–92', 'medium_dark': '88–90', 'dark': '86–88', 'very_dark': '83–86' },
+  'honey': { 'very_light': '97–99', 'light': '95–97', 'medium_light': '93–95', 'medium': '91–93', 'medium_dark': '89–91', 'dark': '87–89', 'very_dark': '84–87' },
+  'anaerobic_washed': { 'very_light': '94–96', 'light': '92–94', 'medium_light': '90–92', 'medium': '88–90', 'medium_dark': '87–89', 'dark': '85–87', 'very_dark': '82–85' },
+  'anaerobic_natural': { 'very_light': '93–95', 'light': '91–93', 'medium_light': '89–91', 'medium': '87–89', 'medium_dark': '85–87', 'dark': '83–85', 'very_dark': '80–83' },
+  'carbonic_maceration': { 'very_light': '94–96', 'light': '92–94', 'medium_light': '90–92', 'medium': '88–90', 'medium_dark': '86–88', 'dark': '84–86', 'very_dark': '81–84' },
+  'lactic': { 'very_light': '94–96', 'light': '92–94', 'medium_light': '90–92', 'medium': '88–90', 'medium_dark': '86–88', 'dark': '84–86', 'very_dark': '81–84' },
+  'yeast_inoculated': { 'very_light': '95–97', 'light': '93–95', 'medium_light': '91–93', 'medium': '89–91', 'medium_dark': '87–89', 'dark': '85–87', 'very_dark': '82–85' },
+  'extended': { 'very_light': '93–95', 'light': '91–93', 'medium_light': '89–91', 'medium': '87–89', 'medium_dark': '85–87', 'dark': '83–85', 'very_dark': '80–83' },
+  'double_fermentation': { 'very_light': '92–95', 'light': '90–93', 'medium_light': '88–91', 'medium': '86–89', 'medium_dark': '84–87', 'dark': '82–85', 'very_dark': '80–82' },
+  'thermal_shock': { 'very_light': '94–96', 'light': '92–94', 'medium_light': '90–92', 'medium': '88–90', 'medium_dark': '86–88', 'dark': '84–86', 'very_dark': '81–84' },
+  'co_fermented': { 'very_light': '90–94', 'light': '88–92', 'medium_light': '86–90', 'medium': '84–88', 'medium_dark': '82–86', 'dark': '80–84', 'very_dark': '78–82' }
 };
 
 function getOptimalTemp(roast, process) {
-  const temp = baseRoastTemps[roast] + (fermentationOffsets[process] || 0);
-  return Math.max(80, Math.min(100, temp));
+  // Legacy mapping fallbacks for older saved YAML files
+  const processMap = {
+    'anaerobic': 'anaerobic_washed',
+    'double_washed': 'washed',
+    'white_honey': 'honey', 'yellow_honey': 'honey', 'red_honey': 'honey', 'black_honey': 'honey',
+    'experimental': 'co_fermented',
+    'wine_fermentation': 'extended',
+    'fruit_maceration': 'carbonic_maceration',
+    'extended_fermentation': 'extended'
+  };
+
+  const mappedProcess = processMap[process] || process;
+
+  if (TEMP_MATRIX[mappedProcess] && TEMP_MATRIX[mappedProcess][roast]) {
+    return TEMP_MATRIX[mappedProcess][roast];
+  }
+  return '90–94'; // Safe fallback
 }
+
 const noTempMethods = ['moka_pot', 'cold_brew', 'siphon', 'phin', 'auto_drip'];
 
 // ==========================================
@@ -227,7 +264,6 @@ function renderBaristaDropdown(selectedId = null) {
   baristaEl.classList.remove("bg-stone-100", "dark:bg-stone-800");
   baristaEl.classList.add("bg-white", "dark:bg-stone-900");
 
-  // Explicitly force James Hoffmann if selectedId is null, otherwise fallbacks
   if (selectedId && allBaristas.some(b => b.id === selectedId)) {
     baristaEl.value = selectedId;
   } else if (allBaristas.some(b => b.id === 'james_hoffmann')) {
@@ -246,8 +282,14 @@ function initSearchableDropdown(wrapperId, groups, defaultVal = null) {
   const menu = wrapper.querySelector('.dropdown-menu');
   const search = wrapper.querySelector('.search-input');
   const list = wrapper.querySelector('.option-list');
-  const textSpan = wrapper.querySelector('.selected-text');
   const hiddenInput = wrapper.querySelector('input[type="hidden"]');
+
+  const newToggle = toggle.cloneNode(true);
+  toggle.parentNode.replaceChild(newToggle, toggle);
+  const newSearch = search.cloneNode(true);
+  search.parentNode.replaceChild(newSearch, search);
+
+  const textSpan = newToggle.querySelector('.selected-text');
 
   if (defaultVal) {
     hiddenInput.value = defaultVal;
@@ -288,11 +330,6 @@ function initSearchableDropdown(wrapperId, groups, defaultVal = null) {
     if (!hasResults) list.innerHTML = `<div class="px-3 py-4 text-center text-xs text-stone-500 dark:text-stone-400">No options found</div>`;
   }
 
-  const newToggle = toggle.cloneNode(true);
-  toggle.parentNode.replaceChild(newToggle, toggle);
-  const newSearch = search.cloneNode(true);
-  search.parentNode.replaceChild(newSearch, search);
-
   newToggle.addEventListener('click', (e) => {
     e.stopPropagation();
     if (newToggle.disabled) return;
@@ -331,7 +368,7 @@ async function initializeApp() {
       const indexResponse = await fetch(LOCAL_INDEX_URL);
       if (indexResponse.ok) {
         const localFiles = await indexResponse.json();
-        yamlFilesToFetch = localFiles.map(fileName => `../barista/${fileName}`);
+        yamlFilesToFetch = localFiles.map(fileName => `barista/${fileName}`);
         loadSuccess = true;
       }
     } catch (e) { /* Offline */ }
@@ -488,17 +525,20 @@ function setupEventListeners() {
   downloadConfigBtn.addEventListener('click', downloadCustomConfig);
 
   // IMPORT MENU LISTENERS
-  importMenuBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    importMenuDropdown.classList.toggle('hidden');
-  });
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('#import-menu-dropdown') && !e.target.closest('#import-menu-btn')) {
-      importMenuDropdown.classList.add('hidden');
-    }
-  });
-  loadConfigFile.addEventListener('change', handleFileUpload);
-  loadQrFile.addEventListener('change', handleQrUpload);
+  if (importMenuBtn) {
+    importMenuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      importMenuDropdown.classList.toggle('hidden');
+    });
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#import-menu-dropdown') && !e.target.closest('#import-menu-btn')) {
+        importMenuDropdown.classList.add('hidden');
+      }
+    });
+  }
+
+  if (loadConfigFile) loadConfigFile.addEventListener('change', handleFileUpload);
+  if (loadQrFile) loadQrFile.addEventListener('change', handleQrUpload);
 
   shareQrBtn.addEventListener('click', () => triggerQrModal(true));
   quickShareQrBtn.addEventListener('click', () => triggerQrModal(false));
@@ -872,7 +912,7 @@ function handleFileUpload(e) {
   };
   reader.readAsText(file);
   e.target.value = '';
-  importMenuDropdown.classList.add('hidden');
+  if (importMenuDropdown) importMenuDropdown.classList.add('hidden');
 }
 
 function handleQrUpload(e) {
@@ -883,24 +923,18 @@ function handleQrUpload(e) {
   reader.onload = (evt) => {
     const img = new Image();
     img.onload = () => {
-      // Create canvas for scanning
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
-      // FIX: Scale down massive phone photos to prevent mobile browser memory crashes
       const MAX_WIDTH = 800;
       let scale = 1;
-      if (img.width > MAX_WIDTH) {
-        scale = MAX_WIDTH / img.width;
-      }
+      if (img.width > MAX_WIDTH) scale = MAX_WIDTH / img.width;
+
       canvas.width = img.width * scale;
       canvas.height = img.height * scale;
-
-      // Draw the shrunk image
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-      // Decode the QR code
       const code = jsQR(imageData.data, imageData.width, imageData.height);
 
       if (code) {
@@ -923,8 +957,9 @@ function handleQrUpload(e) {
   };
   reader.readAsDataURL(file);
   e.target.value = '';
-  importMenuDropdown.classList.add('hidden');
+  if (importMenuDropdown) importMenuDropdown.classList.add('hidden');
 }
+
 // ==========================================
 // Calculation & Steps Rendering
 // ==========================================
@@ -993,6 +1028,8 @@ function calculateRecipe() {
   ratioDisplay.textContent = activeRatio;
   const totalWater = Math.round(weight * activeRatio);
   targetWaterEl.textContent = totalWater;
+
+  // Cleanly display the dynamic temperature range string based on 2D Matrix
   targetTempEl.textContent = getOptimalTemp(roastEl.value, fermentationEl.value);
 
   if (currentMode === 'create') {

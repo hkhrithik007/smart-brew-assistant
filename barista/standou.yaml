@@ -1,0 +1,29 @@
+id: "standout_coffee"
+name: "Standout Coffee (Oscar)"
+default_roast: "light"
+default_process: "washed"
+default_dose: 15
+methods:
+  v60:
+    label: "Pour Over (V60)"
+    ratio: 16.6
+    grinder_name: "Timemore C2s"
+    grind_size: 18
+    result_type: "Maximized flavor and high clarity (Target 1.4 TDS)."
+    notes: "The Double Bloom recipe. Use water at 93°C. Adjust grind size slightly if you miss the 2:45 drawdown mark."
+    steps:
+      - time: "0:00"
+        water: "{{chunk_1}}"
+        text: "Pour {{chunk_1}}g of water for the first bloom over 10 seconds. Gently swirl to wet all grounds."
+      - time: "0:30"
+        water: "{{chunk_2}}"
+        text: "Pour up to {{chunk_2}}g total for the second bloom, spiraling from the center toward the rim."
+      - time: "1:00"
+        water: "{{water}}"
+        text: "Slowly pour in a circular motion up to {{water}}g total."
+      - time: "1:45"
+        water: ""
+        text: "Give the V60 a small swirl and a gentle tap once the final pour finishes."
+      - time: "2:45"
+        water: ""
+        text: "Drawdown should be complete with the coffee bed visible."

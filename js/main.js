@@ -49,88 +49,41 @@ const CUSTOM_BREW_METHODS = [
 const GITHUB_API_URL = 'https://api.github.com/repos/hkhrithik007/smart-brew-assistant/contents/barista';
 const LOCAL_INDEX_URL = 'barista/index.json';
 
-const EMERGENCY_FALLBACK_DATA = [
-  {
-    id: "james_hoffmann", name: "James Hoffmann", default_roast: "medium_light", default_process: "washed", default_dose: 15,
-    methods: {
-      v60: {
-        label: "Pour Over (V60)", ratio: 16.6, grinder_name: "Timemore C2s", grind_size: 20, result_type: "Clean, sweet, and bright cup.", notes: "Based on the Ultimate 1-Cup V60 method. Use water just off the boil.", steps: [
-          { time: "0:00", water: "{{chunk_1}}", text: "Pour {{chunk_1}}g of water to bloom. Gently swirl from 0:10 - 0:15." },
-          { time: "0:45", water: "{{chunk_2}}", text: "Pour up to {{chunk_2}}g total over 15 seconds. Pause until 1:10." },
-          { time: "1:10", water: "{{chunk_3}}", text: "Pour up to {{chunk_3}}g total over 10 seconds. Pause until 1:30." },
-          { time: "1:30", water: "{{chunk_4}}", text: "Pour up to {{chunk_4}}g total over 10 seconds. Pause until 1:50." },
-          { time: "1:50", water: "{{water}}", text: "Pour up to {{water}}g total over 10 seconds." },
-          { time: "2:00", water: "", text: "Give the brewer a final gentle swirl and let it draw down." }
-        ]
-      },
-      french_press: {
-        label: "French Press", ratio: 15.0, grinder_name: "Timemore C2s", grind_size: 24, result_type: "Heavy body, rich and textured.", notes: "James Hoffmann Ultimate French Press technique.", steps: [
-          { time: "0:00", water: "{{water}}", text: "Pour all {{water}}g of water. Wait 4 minutes." },
-          { time: "4:00", water: "", text: "Stir the crust. Scoop off the foam and floating bits. Wait 5 more minutes." },
-          { time: "9:00", water: "", text: "Plunge just to the surface of the coffee and pour gently." }
-        ]
-      },
-      moka_pot: {
-        label: "Moka Pot", ratio: 10.0, grinder_name: "Timemore C2s", grind_size: 15, result_type: "Strong, espresso-like intensity.", notes: "Fill base with boiling water. Start on medium-low heat.", steps: [
-          { time: "0:00", water: "", text: "Assemble with boiling water in the base and place on medium-low heat." },
-          { time: "0:00", water: "", text: "When coffee starts flowing fast and bubbling lighter, remove from heat." },
-          { time: "0:00", water: "", text: "Run the base under cold water immediately to stop extraction." }
-        ]
-      }
-    }
-  },
-  {
-    id: "morgan_eckroth", name: "Morgan Eckroth", default_roast: "light", default_process: "washed", default_dose: 15,
-    methods: {
-      v60: {
-        label: "Pour Over (V60)", ratio: 16.0, grinder_name: "Timemore C2s", grind_size: 20, result_type: "Balanced, everyday cup with great clarity.", steps: [
-          { time: "0:00", water: "{{chunk_1}}", text: "Pour water in a spiral motion for the bloom. Let it rest and let the CO2 escape." },
-          { time: "0:30", water: "{{chunk_3}}", text: "Pour the next batch of water in a spiral motion, starting in the center and working towards the edges." },
-          { time: "1:30", water: "{{water}}", text: "Pour the remaining water. The drawdown should finish right around 2:15 to 2:30." },
-          { time: "2:30", water: "", text: "Drawdown completes. Serve and enjoy!" }
-        ]
-      },
-      french_press: {
-        label: "French Press", ratio: 15.0, grinder_name: "Timemore C2s", grind_size: 24, result_type: "Full-bodied, rich, and sweet cup.", steps: [
-          { time: "0:00", water: "", text: "Add roughly 2x the coffee weight in water for the bloom. Use a spoon to stir lightly, ensuring all grounds are saturated." },
-          { time: "0:30", water: "{{water}}", text: "Add the remaining water. Give it one final stir and place the plunger resting lightly on the surface (do not push down)." },
-          { time: "4:30", water: "", text: "Remove from scale. Plunge slowly until the coffee bed is almost compacted at the bottom. Do not press hard into the grounds." }
-        ]
-      },
-      aeropress: {
-        label: "AeroPress", ratio: 16.0, grinder_name: "Timemore C2s", grind_size: 16, result_type: "Easy, versatile, and well-extracted cup.", steps: [
-          { time: "0:00", water: "{{water}}", text: "Standard orientation. Add all of your water right off the bat. Give it a stir to incorporate the grounds." },
-          { time: "0:15", water: "", text: "Place the plunger on top at a slight angle to create a vacuum seal. This stops coffee from dripping through early." },
-          { time: "1:30", water: "", text: "Straighten out the plunger and begin pushing down slowly and steadily (this should take 15-30 seconds)." },
-          { time: "2:00", water: "", text: "Stop plunging when you feel the bed compact or hear a slight hiss." }
-        ]
-      },
-      moka_pot: {
-        label: "Moka Pot", ratio: 10.0, grinder_name: "Timemore C2s", grind_size: 15, result_type: "Rich, highly concentrated, espresso-like coffee.", steps: [
-          { time: "0:00", water: "", text: "Fill the lower chamber with preheated water up to just below the pressure release valve." },
-          { time: "0:15", water: "", text: "Fill the basket to the top with coffee (do not tamp or compress). Assemble the pot using a towel to protect your hands." },
-          { time: "0:30", water: "", text: "Place on the stove over medium heat. Leave the lid open so you can keep an eye on the brew." },
-          { time: "2:00", water: "", text: "As soon as coffee starts to bubble up into the top chamber, reduce the stove to low heat." },
-          { time: "3:00", water: "", text: "When you hear the coffee sputtering, close the lid and remove the pot entirely from the heat. Pour immediately." }
-        ]
-      }
-    }
-  },
-  {
-    id: "standout_coffee", name: "Standout Coffee (Oscar)", default_roast: "light", default_process: "washed", default_dose: 15,
-    methods: {
-      v60: {
-        label: "Pour Over (V60)", ratio: 16.6, grinder_name: "Timemore C2s", grind_size: 18, result_type: "Maximized flavor and high clarity (Target 1.4 TDS).", notes: "The Double Bloom recipe. Use water at 93°C. Adjust grind size slightly if you miss the 2:45 drawdown mark.", steps: [
-          { time: "0:00", water: "{{chunk_1}}", text: "Pour {{chunk_1}}g of water for the first bloom over 10 seconds. Gently swirl to wet all grounds." },
-          { time: "0:30", water: "{{chunk_2}}", text: "Pour up to {{chunk_2}}g total for the second bloom, spiraling from the center toward the rim." },
-          { time: "1:00", water: "{{water}}", text: "Slowly pour in a circular motion up to {{water}}g total." },
-          { time: "1:45", water: "", text: "Give the V60 a small swirl and a gentle tap once the final pour finishes." },
-          { time: "2:45", water: "", text: "Drawdown should be complete with the coffee bed visible." }
-        ]
-      }
+const EMERGENCY_FALLBACK_DATA = [{
+  id: "james_hoffmann", name: "James Hoffmann", default_roast: "medium_light", default_process: "washed", default_dose: 15,
+  methods: {
+    v60: {
+      label: "Pour Over (V60)", ratio: 16.6, grinder_name: "Timemore C2s", grind_size: 20,
+      result_type: "Clean, sweet, and bright cup.", notes: "Based on the Ultimate 1-Cup V60 method. Use water just off the boil.",
+      steps: [
+        { time: "0:00", water: "{{chunk_1}}", text: "Pour {{chunk_1}}g of water to bloom. Gently swirl from 0:10 - 0:15." },
+        { time: "0:45", water: "{{chunk_2}}", text: "Pour up to {{chunk_2}}g total over 15 seconds. Pause until 1:10." },
+        { time: "1:10", water: "{{chunk_3}}", text: "Pour up to {{chunk_3}}g total over 10 seconds. Pause until 1:30." },
+        { time: "1:30", water: "{{chunk_4}}", text: "Pour up to {{chunk_4}}g total over 10 seconds. Pause until 1:50." },
+        { time: "1:50", water: "{{water}}", text: "Pour up to {{water}}g total over 10 seconds." },
+        { time: "2:00", water: "", text: "Give the brewer a final gentle swirl and let it draw down." }
+      ]
+    },
+    french_press: {
+      label: "French Press", ratio: 15, grinder_name: "Timemore C2s", grind_size: 24,
+      result_type: "Heavy body, rich and textured.", notes: "James Hoffmann Ultimate French Press technique.",
+      steps: [
+        { time: "0:00", water: "{{water}}", text: "Pour all {{water}}g of water. Wait 4 minutes." },
+        { time: "4:00", water: "", text: "Stir the crust. Scoop off the foam and floating bits. Wait 5 more minutes." },
+        { time: "9:00", water: "", text: "Plunge just to the surface of the coffee and pour gently." }
+      ]
+    },
+    moka_pot: {
+      label: "Moka Pot", ratio: 10, grinder_name: "Timemore C2s", grind_size: 15,
+      result_type: "Strong, espresso-like intensity.", notes: "Fill base with boiling water. Start on medium-low heat.",
+      steps: [
+        { time: "0:00", water: "", text: "Assemble with boiling water in the base and place on medium-low heat." },
+        { time: "0:00", water: "", text: "When coffee starts flowing fast and bubbling lighter, remove from heat." },
+        { time: "0:00", water: "", text: "Run the base under cold water immediately to stop extraction." }
+      ]
     }
   }
-];
+}];
 
 let allBaristas = [];
 let stagedCustomMethods = {};
@@ -386,6 +339,19 @@ async function initializeApp() {
     } catch (e) { /* Offline */ }
 
     try {
+      const directoryResponse = await fetch('barista/');
+      if (directoryResponse.ok) {
+        const directory = new DOMParser().parseFromString(await directoryResponse.text(), 'text/html');
+        const directoryUrl = new URL('barista/', window.location.href);
+        yamlFilesToFetch.push(...[...directory.querySelectorAll('a[href]')]
+          .map(link => new URL(link.getAttribute('href'), directoryUrl))
+          .filter(url => url.pathname.startsWith(directoryUrl.pathname) &&
+            !url.pathname.slice(directoryUrl.pathname.length).includes('/') && /\.ya?ml$/i.test(url.pathname))
+          .map(url => url.href));
+      }
+    } catch (e) { /* Directory listing unavailable */ }
+
+    try {
       const response = await fetch(GITHUB_API_URL);
       if (response.ok) {
         const files = await response.json();
@@ -404,14 +370,18 @@ async function initializeApp() {
           const fileRes = await fetch(cacheBusterUrl);
           if (fileRes.ok) {
             const config = jsyaml.load(await fileRes.text());
-            if (config && config.id) liveBaristas.push(config);
+            if (config?.id && config.name && config.methods && typeof config.methods === 'object') {
+              liveBaristas.push(config);
+            }
           }
         } catch (err) { /* Skip */ }
       }));
 
-      if (liveBaristas.length > 0) {
-        allBaristas = liveBaristas;
-      }
+      liveBaristas.forEach(config => {
+        const index = allBaristas.findIndex(barista => barista.id === config.id);
+        if (index === -1) allBaristas.push(config);
+        else allBaristas[index] = config;
+      });
     }
   } catch (error) {
     console.warn("Using offline fallback data.");

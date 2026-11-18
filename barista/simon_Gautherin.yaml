@@ -1,0 +1,42 @@
+recipe:
+id: "ultimate_v60_simon"
+title: "The Ultimate V60 Recipe"
+source: "Simon (Second Best Brewer in the World)"
+video_url: "https://www.instagram.com/reel/DeD1l4sgY4I/"
+
+equipment:
+method: "Pour Over (V60)"
+filter_type: "Paper"
+
+base_parameters:
+coffee_dose_g: 15
+water_target_g: 210
+ratio: "1:14"
+temperature_c: 90
+grind_size: "Very Coarse"
+
+timeline:
+- timestamp: "0:00"
+action: "First Pour"
+pour_volume_g: 70
+cumulative_weight_g: 70
+instruction: "Pour 70g of water. Because the grind is so coarse, we are using a shorter 1:14 ratio to preserve concentration and strength."
+
+- timestamp: "1:00"
+  action: "Second Pour"
+  pour_volume_g: 70
+  cumulative_weight_g: 140
+  instruction: "Pour another 70g of water. Keep your water temperature strictly at 90°C (never above 92°C)."
+  
+- timestamp: "2:00"
+  action: "Third Pour"
+  pour_volume_g: 70
+  cumulative_weight_g: 210
+  instruction: "Pour the final 70g of water to reach your target yield of 210g."
+  
+- timestamp: "3:00"
+  action: "Drawdown Complete"
+  pour_volume_g: 0
+  cumulative_weight_g: 210
+  instruction: "The brew should finish extracting before the 3-minute mark. The result will have no dryness or bitterness."
+

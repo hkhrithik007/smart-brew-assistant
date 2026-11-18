@@ -376,29 +376,27 @@ async function initializeApp() {
 
   try {
     let yamlFilesToFetch = [];
-    let loadSuccess = false;
 
     try {
       const indexResponse = await fetch(LOCAL_INDEX_URL);
       if (indexResponse.ok) {
         const localFiles = await indexResponse.json();
-        yamlFilesToFetch = localFiles.map(fileName => `barista/${fileName}`);
-        loadSuccess = true;
+        yamlFilesToFetch.push(...localFiles.map(fileName => `barista/${fileName}`));
       }
     } catch (e) { /* Offline */ }
 
-    if (!loadSuccess) {
-      try {
-        const response = await fetch(GITHUB_API_URL);
-        if (response.ok) {
-          const files = await response.json();
-          yamlFilesToFetch = files.filter(f => f.name.endsWith('.yaml') || f.name.endsWith('.yml')).map(f => f.download_url);
-          loadSuccess = true;
-        }
-      } catch (e) { /* Offline */ }
-    }
+    try {
+      const response = await fetch(GITHUB_API_URL);
+      if (response.ok) {
+        const files = await response.json();
+        yamlFilesToFetch.push(...files
+          .filter(file => /\.ya?ml$/i.test(file.name))
+          .map(file => file.download_url));
+      }
+    } catch (e) { /* Offline */ }
 
-    if (loadSuccess && yamlFilesToFetch.length > 0) {
+    yamlFilesToFetch = [...new Set(yamlFilesToFetch)];
+    if (yamlFilesToFetch.length > 0) {
       let liveBaristas = [];
       await Promise.all(yamlFilesToFetch.map(async (url) => {
         try {

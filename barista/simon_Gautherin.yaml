@@ -11,7 +11,6 @@ base_parameters:
   coffee_dose_g: 15
   water_target_g: 210
   ratio: "1:14"
-  temperature_c: 90
   grind_size: "Very Coarse"
 
 timeline:

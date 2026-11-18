@@ -2,7 +2,6 @@ recipe:
   id: "ultimate_v60_simon"
   title: "The Ultimate V60 Recipe"
   source: "Simon (Second Best Brewer in the World)"
-  video_url: "https://www.instagram.com/reel/DeD1l4sgY4I/"
 
 equipment:
   method: "Pour Over (V60)"

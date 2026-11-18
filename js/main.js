@@ -85,6 +85,42 @@ const EMERGENCY_FALLBACK_DATA = [{
   }
 }];
 
+function normalizeBaristaConfig(config, fileUrl) {
+  if (config?.id && config.name && config.methods) return config;
+  if (!config?.recipe || !config.base_parameters || !Array.isArray(config.timeline)) return config;
+
+  const parameters = config.base_parameters;
+  const methodLabel = config.equipment?.method || 'Pour Over (V60)';
+  const methodId = /v60/i.test(methodLabel) ? 'v60' : methodLabel.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+  const fileName = new URL(fileUrl, window.location.href).pathname.split('/').pop().replace(/\.ya?ml$/i, '');
+  const name = fileName.replace(/[_-]+/g, ' ').replace(/\b\w/g, letter => letter.toUpperCase());
+  const coffeeDose = Number(parameters.coffee_dose_g) || 15;
+  const ratio = Number(parameters.water_target_g) / coffeeDose || Number(String(parameters.ratio || '').split(':').pop()) || 16.6;
+
+  return {
+    id: config.recipe.id || fileName.toLowerCase().replace(/[^a-z0-9]+/g, '_'),
+    name,
+    default_roast: 'medium_light',
+    default_process: 'washed',
+    default_dose: coffeeDose,
+    methods: {
+      [methodId]: {
+        label: methodLabel,
+        ratio,
+        grinder_name: parameters.grind_size ? `Grind: ${parameters.grind_size}` : '',
+        temperature_c: parameters.temperature_c,
+        result_type: config.recipe.title || config.recipe.source || 'Coffee recipe',
+        notes: [config.recipe.source, config.recipe.video_url].filter(Boolean).join(' · '),
+        steps: config.timeline.map(step => ({
+          time: step.timestamp || '0:00',
+          water: Number(step.pour_volume_g) > 0 ? String(step.cumulative_weight_g ?? step.pour_volume_g) : '',
+          text: [step.action, step.instruction].filter(Boolean).join(': ')
+        }))
+      }
+    }
+  };
+}
+
 let allBaristas = [];
 let stagedCustomMethods = {};
 let activeShareUrl = '';
@@ -369,7 +405,7 @@ async function initializeApp() {
           const cacheBusterUrl = url.includes('github') ? url : url + '?t=' + new Date().getTime();
           const fileRes = await fetch(cacheBusterUrl);
           if (fileRes.ok) {
-            const config = jsyaml.load(await fileRes.text());
+            const config = normalizeBaristaConfig(jsyaml.load(await fileRes.text()), url);
             if (config?.id && config.name && config.methods && typeof config.methods === 'object') {
               liveBaristas.push(config);
             }
@@ -1012,7 +1048,10 @@ function calculateRecipe() {
   targetWaterEl.textContent = totalWater;
 
   // Cleanly display the dynamic temperature range string based on 2D Matrix
-  targetTempEl.textContent = getOptimalTemp(roastEl.value, fermentationEl.value);
+  const configuredTemp = currentMode === 'official'
+    ? allBaristas.find(barista => barista.id === baristaEl.value)?.methods?.[methodEl.value]?.temperature_c
+    : null;
+  targetTempEl.textContent = configuredTemp || getOptimalTemp(roastEl.value, fermentationEl.value);
 
   if (currentMode === 'create') {
     creatorBadgeEl.textContent = `Custom Workspace`;

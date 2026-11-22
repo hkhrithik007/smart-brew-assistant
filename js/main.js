@@ -489,10 +489,29 @@ async function setupCloudRecipes() {
     };
     cloudClient.auth.onAuthStateChange((_event, sessionNow) => { cloudUser = sessionNow?.user || null; refresh().catch(error => setStatus(error.message)); });
     login.onclick = () => authForm.classList.toggle('hidden');
-    document.getElementById('cloud-send-link').onclick = async () => {
-      if (!email.value.trim()) return setStatus('Enter your email address to sign in.');
-      const { error } = await cloudClient.auth.signInWithOtp({ email: email.value.trim(), options: { emailRedirectTo: window.location.origin } });
-      setStatus(error ? error.message : 'Check your email for the sign-in link.');
+    let authMode = 'login';
+    const authSubmit = document.getElementById('cloud-auth-submit');
+    const authSwitch = document.getElementById('cloud-auth-switch');
+    const password = document.getElementById('cloud-password');
+    authSwitch.onclick = () => {
+      authMode = authMode === 'login' ? 'signup' : 'login';
+      authSubmit.textContent = authMode === 'login' ? 'Log in' : 'Create account';
+      authSwitch.textContent = authMode === 'login' ? 'Create account' : 'Back to log in';
+      password.autocomplete = authMode === 'login' ? 'current-password' : 'new-password';
+    };
+    authSubmit.onclick = async () => {
+      if (!email.value.trim() || !password.value) return setStatus('Enter your email and password.');
+      const result = authMode === 'login'
+        ? await cloudClient.auth.signInWithPassword({ email: email.value.trim(), password: password.value })
+        : await cloudClient.auth.signUp({ email: email.value.trim(), password: password.value, options: { emailRedirectTo: window.location.origin } });
+      if (result.error) setStatus(result.error.message);
+      else if (authMode === 'signup' && !result.data.session) setStatus('Account created. Check your email once to confirm it, then log in with your password.');
+      else setStatus('Signed in.');
+    };
+    document.getElementById('cloud-password-reset').onclick = async () => {
+      if (!email.value.trim()) return setStatus('Enter your email first to reset your password.');
+      const { error } = await cloudClient.auth.resetPasswordForEmail(email.value.trim(), { redirectTo: window.location.origin });
+      setStatus(error ? error.message : 'Check your email for the password reset link.');
     };
     logout.onclick = async () => { const { error } = await cloudClient.auth.signOut(); if (error) setStatus(error.message); };
     save.onclick = async () => {

@@ -137,6 +137,7 @@
         ></path>
       </svg>
     </button>
+    <button id="account-page-toggle" type="button" class="absolute top-4 right-20 md:top-8 md:right-24 rounded-full border border-stone-200 bg-white/80 px-4 py-3 text-sm font-bold text-stone-700 shadow-sm backdrop-blur-md dark:border-stone-700 dark:bg-stone-800/80 dark:text-stone-200 z-50">My account</button>
 
     <div
       class="flex items-center gap-3 md:gap-4 mb-6 md:mb-8 drop-shadow-sm z-10 relative mt-12 md:mt-0"
@@ -201,7 +202,7 @@
       </h1>
     </div>
 
-    <div
+    <div id="brew-page"
       class="w-full max-w-5xl bg-white/90 dark:bg-stone-900/90 backdrop-blur-xl rounded-2xl md:rounded-3xl shadow-2xl shadow-amber-900/10 dark:shadow-black/50 overflow-hidden flex flex-col md:flex-row border border-white dark:border-stone-800 z-10 relative transition-colors duration-300"
     >
       <div
@@ -317,21 +318,6 @@
         </div>
 
         <div class="space-y-4 md:space-y-5">
-          <section id="cloud-recipes" class="rounded-xl border border-stone-200 dark:border-stone-700 p-3 shadow-sm">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <div><p class="text-sm font-bold">Personal recipes</p><p id="cloud-status" class="text-xs text-stone-500 dark:text-stone-400">Offline mode · recipes stay on this device</p></div>
-              <div class="flex gap-2">
-                <button id="cloud-login" type="button" class="rounded-lg border border-stone-300 dark:border-stone-600 px-3 py-2 text-xs font-bold">Sign in</button>
-                <button id="cloud-save" type="button" class="hidden rounded-lg bg-amber-600 px-3 py-2 text-xs font-bold text-white">Save recipe</button>
-                <button id="cloud-logout" type="button" class="hidden rounded-lg border border-stone-300 dark:border-stone-600 px-3 py-2 text-xs font-bold">Sign out</button>
-              </div>
-            </div>
-            <div id="cloud-auth-form" class="hidden mt-3 flex gap-2">
-              <input id="cloud-email" type="email" autocomplete="email" placeholder="Email address" class="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800 dark:border-stone-600 dark:bg-stone-800 dark:text-white">
-              <button id="cloud-send-link" type="button" class="rounded-lg bg-stone-800 px-3 py-2 text-xs font-bold text-white dark:bg-stone-700">Send sign-in link</button>
-            </div>
-            <div id="cloud-saved-list" class="mt-2 space-y-1"></div>
-          </section>
           <div id="barista-container">
             <label
               id="barista-label"
@@ -865,6 +851,16 @@
         </div>
       </div>
     </div>
+
+    <section id="account-page" class="hidden w-full max-w-5xl rounded-2xl border border-stone-200 bg-white/90 p-6 shadow-2xl dark:border-stone-800 dark:bg-stone-900/90 z-10 relative">
+      <div class="mb-6 flex items-center justify-between"><div><p class="text-xs font-bold uppercase tracking-wider text-amber-700">Account</p><h2 class="text-2xl font-black">My recipes</h2></div><button id="back-to-brew" type="button" class="rounded-lg border border-stone-300 px-4 py-2 text-sm font-bold dark:border-stone-600">Back to brew</button></div>
+      <section id="cloud-recipes" class="rounded-xl border border-stone-200 p-4 dark:border-stone-700">
+        <p id="cloud-status" class="mb-3 text-sm text-stone-500 dark:text-stone-400">Offline mode · recipes stay on this device</p>
+        <div class="flex flex-wrap gap-2"><button id="cloud-login" type="button" class="rounded-lg border border-stone-300 px-4 py-2 text-sm font-bold dark:border-stone-600">Sign in</button><button id="cloud-save" type="button" class="hidden rounded-lg bg-amber-600 px-4 py-2 text-sm font-bold text-white">Save current recipe</button><button id="cloud-logout" type="button" class="hidden rounded-lg border border-stone-300 px-4 py-2 text-sm font-bold dark:border-stone-600">Sign out</button></div>
+        <div id="cloud-auth-form" class="hidden mt-3 flex gap-2"><input id="cloud-email" type="email" autocomplete="email" placeholder="Email address" class="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800 dark:border-stone-600 dark:bg-stone-800 dark:text-white"><button id="cloud-send-link" type="button" class="rounded-lg bg-stone-800 px-4 py-2 text-sm font-bold text-white dark:bg-stone-700">Send sign-in link</button></div>
+        <div id="cloud-saved-list" class="mt-4 space-y-2"></div>
+      </section>
+    </section>
 
     <div
       class="mt-6 md:mt-8 mb-4 text-center flex items-center justify-center gap-2 md:gap-3 text-xs md:text-sm font-semibold text-stone-500/80 dark:text-stone-500 tracking-wide z-10 relative"

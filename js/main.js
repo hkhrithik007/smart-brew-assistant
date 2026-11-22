@@ -447,6 +447,16 @@ async function setupCloudRecipes() {
   const authForm = document.getElementById('cloud-auth-form');
   const email = document.getElementById('cloud-email');
   const setStatus = (message) => { status.textContent = message; };
+  document.getElementById('account-page-toggle').onclick = () => {
+    document.getElementById('brew-page').classList.add('hidden');
+    document.getElementById('account-page').classList.remove('hidden');
+    document.getElementById('account-page-toggle').classList.add('hidden');
+  };
+  document.getElementById('back-to-brew').onclick = () => {
+    document.getElementById('account-page').classList.add('hidden');
+    document.getElementById('brew-page').classList.remove('hidden');
+    document.getElementById('account-page-toggle').classList.remove('hidden');
+  };
   if (!window.supabase?.createClient) { setStatus('Cloud saving unavailable · offline mode is ready'); return; }
   try {
     const configResponse = await fetch('/api/supabase-config');
@@ -486,7 +496,15 @@ async function setupCloudRecipes() {
     };
     logout.onclick = async () => { const { error } = await cloudClient.auth.signOut(); if (error) setStatus(error.message); };
     save.onclick = async () => {
-      const recipe = allBaristas.find(item => item.id === baristaEl.value);
+      let recipe;
+      if (currentMode === 'create') {
+        const hasUnsavedSteps = document.querySelectorAll('.step-row').length > 0 && document.querySelector('.custom-step-text')?.value !== '';
+        if (Object.keys(stagedCustomMethods).length === 0 || hasUnsavedSteps) stageCurrentMethod();
+        const name = customNameEl.value.trim() || 'My Custom Config';
+        recipe = { id: name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, ''), name, default_roast: roastEl.value, default_process: fermentationEl.value, default_dose: parseFloat(weightEl.value), methods: { ...stagedCustomMethods } };
+      } else {
+        recipe = allBaristas.find(item => item.id === baristaEl.value);
+      }
       if (!recipe) return setStatus('Select a recipe to save.');
       const { error } = await cloudClient.from('personal_recipes').insert({ user_id: cloudUser.id, recipe });
       if (error) setStatus(error.message); else { setStatus('Recipe saved to your account.'); await refresh(); }

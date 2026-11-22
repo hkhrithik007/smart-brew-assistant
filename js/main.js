@@ -126,6 +126,8 @@ let stagedCustomMethods = {};
 let activeShareUrl = '';
 let activeShareConfig = null;
 let currentMode = 'official';
+let cloudClient = null;
+let cloudUser = null;
 
 // ==========================================
 // DOM Elements
@@ -360,6 +362,7 @@ document.addEventListener('click', (e) => {
 // ==========================================
 async function initializeApp() {
   setupDarkMode();
+  setupCloudRecipes();
 
   allBaristas = [...EMERGENCY_FALLBACK_DATA];
 
@@ -434,6 +437,62 @@ async function initializeApp() {
   } else {
     checkUrlForSharedRecipe();
   }
+}
+
+async function setupCloudRecipes() {
+  const status = document.getElementById('cloud-status');
+  const login = document.getElementById('cloud-login');
+  const save = document.getElementById('cloud-save');
+  const logout = document.getElementById('cloud-logout');
+  const authForm = document.getElementById('cloud-auth-form');
+  const email = document.getElementById('cloud-email');
+  const setStatus = (message) => { status.textContent = message; };
+  if (!window.supabase?.createClient) { setStatus('Cloud saving unavailable · offline mode is ready'); return; }
+  try {
+    const configResponse = await fetch('/api/supabase-config');
+    if (!configResponse.ok) throw new Error('Cloud saving is not configured for this deployment.');
+    const { url, key } = await configResponse.json();
+    cloudClient = window.supabase.createClient(url, key);
+    const { data: { session } } = await cloudClient.auth.getSession();
+    cloudUser = session?.user || null;
+    const refresh = async () => {
+      login.classList.toggle('hidden', !!cloudUser);
+      logout.classList.toggle('hidden', !cloudUser);
+      save.classList.toggle('hidden', !cloudUser);
+      authForm.classList.add('hidden');
+      if (!cloudUser) { setStatus('Offline mode · sign in to save recipes in your account'); return; }
+      setStatus(`Signed in as ${cloudUser.email} · up to 50 MB of recipes`);
+      const { data, error } = await cloudClient.from('personal_recipes').select('id,recipe,updated_at').order('updated_at', { ascending: false });
+      if (error) throw error;
+      const list = document.getElementById('cloud-saved-list');
+      list.replaceChildren();
+      data.forEach(row => {
+        const item = document.createElement('div'); item.className = 'flex items-center justify-between gap-2 text-xs';
+        const name = document.createElement('span'); name.textContent = row.recipe.name || row.recipe.id || 'Saved recipe';
+        const actions = document.createElement('span'); actions.className = 'flex gap-2';
+        const load = document.createElement('button'); load.textContent = 'Load'; load.className = 'font-bold text-amber-700';
+        load.onclick = () => { const recipe = row.recipe; const index = allBaristas.findIndex(x => x.id === recipe.id); if (index < 0) allBaristas.unshift(recipe); else allBaristas[index] = recipe; renderBaristaDropdown(recipe.id); setMode('official'); };
+        const remove = document.createElement('button'); remove.textContent = 'Delete'; remove.className = 'font-bold text-red-600';
+        remove.onclick = async () => { const { error: deleteError } = await cloudClient.from('personal_recipes').delete().eq('id', row.id); if (deleteError) setStatus(deleteError.message); else refresh(); };
+        actions.append(load, remove); item.append(name, actions); list.append(item);
+      });
+    };
+    cloudClient.auth.onAuthStateChange((_event, sessionNow) => { cloudUser = sessionNow?.user || null; refresh().catch(error => setStatus(error.message)); });
+    login.onclick = () => authForm.classList.toggle('hidden');
+    document.getElementById('cloud-send-link').onclick = async () => {
+      if (!email.value.trim()) return setStatus('Enter your email address to sign in.');
+      const { error } = await cloudClient.auth.signInWithOtp({ email: email.value.trim(), options: { emailRedirectTo: window.location.origin } });
+      setStatus(error ? error.message : 'Check your email for the sign-in link.');
+    };
+    logout.onclick = async () => { const { error } = await cloudClient.auth.signOut(); if (error) setStatus(error.message); };
+    save.onclick = async () => {
+      const recipe = allBaristas.find(item => item.id === baristaEl.value);
+      if (!recipe) return setStatus('Select a recipe to save.');
+      const { error } = await cloudClient.from('personal_recipes').insert({ user_id: cloudUser.id, recipe });
+      if (error) setStatus(error.message); else { setStatus('Recipe saved to your account.'); await refresh(); }
+    };
+    await refresh();
+  } catch (error) { setStatus(`${error.message} · offline mode is ready`); }
 }
 
 // ==========================================

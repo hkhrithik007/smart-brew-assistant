@@ -317,6 +317,21 @@
         </div>
 
         <div class="space-y-4 md:space-y-5">
+          <section id="cloud-recipes" class="rounded-xl border border-stone-200 dark:border-stone-700 p-3 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div><p class="text-sm font-bold">Personal recipes</p><p id="cloud-status" class="text-xs text-stone-500 dark:text-stone-400">Offline mode · recipes stay on this device</p></div>
+              <div class="flex gap-2">
+                <button id="cloud-login" type="button" class="rounded-lg border border-stone-300 dark:border-stone-600 px-3 py-2 text-xs font-bold">Sign in</button>
+                <button id="cloud-save" type="button" class="hidden rounded-lg bg-amber-600 px-3 py-2 text-xs font-bold text-white">Save recipe</button>
+                <button id="cloud-logout" type="button" class="hidden rounded-lg border border-stone-300 dark:border-stone-600 px-3 py-2 text-xs font-bold">Sign out</button>
+              </div>
+            </div>
+            <div id="cloud-auth-form" class="hidden mt-3 flex gap-2">
+              <input id="cloud-email" type="email" autocomplete="email" placeholder="Email address" class="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800 dark:border-stone-600 dark:bg-stone-800 dark:text-white">
+              <button id="cloud-send-link" type="button" class="rounded-lg bg-stone-800 px-3 py-2 text-xs font-bold text-white dark:bg-stone-700">Send sign-in link</button>
+            </div>
+            <div id="cloud-saved-list" class="mt-2 space-y-1"></div>
+          </section>
           <div id="barista-container">
             <label
               id="barista-label"
@@ -1029,6 +1044,7 @@
       </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/main.js"></script>
   </body>
 </html>

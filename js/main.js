@@ -493,14 +493,18 @@ async function setupCloudRecipes() {
     const authSubmit = document.getElementById('cloud-auth-submit');
     const authSwitch = document.getElementById('cloud-auth-switch');
     const password = document.getElementById('cloud-password');
+    const passwordConfirm = document.getElementById('cloud-password-confirm');
     authSwitch.onclick = () => {
       authMode = authMode === 'login' ? 'signup' : 'login';
       authSubmit.textContent = authMode === 'login' ? 'Log in' : 'Create account';
       authSwitch.textContent = authMode === 'login' ? 'Create account' : 'Back to log in';
       password.autocomplete = authMode === 'login' ? 'current-password' : 'new-password';
+      passwordConfirm.classList.toggle('hidden', authMode !== 'signup');
+      passwordConfirm.value = '';
     };
     authSubmit.onclick = async () => {
       if (!email.value.trim() || !password.value) return setStatus('Enter your email and password.');
+      if (authMode === 'signup' && password.value !== passwordConfirm.value) return setStatus('Passwords do not match.');
       const result = authMode === 'login'
         ? await cloudClient.auth.signInWithPassword({ email: email.value.trim(), password: password.value })
         : await cloudClient.auth.signUp({ email: email.value.trim(), password: password.value, options: { emailRedirectTo: window.location.origin } });

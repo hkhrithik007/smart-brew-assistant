@@ -494,12 +494,20 @@ async function setupCloudRecipes() {
     const authSwitch = document.getElementById('cloud-auth-switch');
     const password = document.getElementById('cloud-password');
     const passwordConfirm = document.getElementById('cloud-password-confirm');
+    const passwordConfirmWrap = document.getElementById('cloud-password-confirm-wrap');
+    authForm.querySelectorAll('[data-toggle-password]').forEach(button => {
+      button.onclick = () => {
+        const input = document.getElementById(button.dataset.togglePassword);
+        input.type = input.type === 'password' ? 'text' : 'password';
+        button.textContent = input.type === 'password' ? 'Show' : 'Hide';
+      };
+    });
     authSwitch.onclick = () => {
       authMode = authMode === 'login' ? 'signup' : 'login';
       authSubmit.textContent = authMode === 'login' ? 'Log in' : 'Create account';
       authSwitch.textContent = authMode === 'login' ? 'Create account' : 'Back to log in';
       password.autocomplete = authMode === 'login' ? 'current-password' : 'new-password';
-      passwordConfirm.classList.toggle('hidden', authMode !== 'signup');
+      passwordConfirmWrap.classList.toggle('hidden', authMode !== 'signup');
       passwordConfirm.value = '';
     };
     authSubmit.onclick = async () => {
